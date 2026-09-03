@@ -15,18 +15,24 @@ export async function updateSession(request: NextRequest) {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+
         response = NextResponse.next({ request });
+
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
+        );
+
+        Object.entries(headers).forEach(([key, value]) =>
+          response.headers.set(key, value),
         );
       },
     },
   });
 
-  // Auth Cookie がある場合に期限切れトークンを更新します。
-  // 認可判定は各 Server Component / Server Action / Route Handler 側で行います。
+  // Cookie セッションを検証し、期限切れトークンがあれば更新します。
+  // ここで全ルートを強制的に保護せず、認可はページ/Action/RLSで重ねて行います。
   await supabase.auth.getClaims();
 
   return response;

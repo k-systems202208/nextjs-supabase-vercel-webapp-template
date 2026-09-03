@@ -1,110 +1,111 @@
 # Getting Started
 
-このドキュメントは、新しい作業者がこのテンプレートを利用して、GitHub Desktop・ChatGPT・Codex のいずれでも開発を始められる状態にするための手順です。
+このドキュメントは、このテンプレートをCloneしてSupabase Auth / CRUD / PWAまで動かす手順です。
 
 ## 1. 前提
 
-- GitHub アカウント
+- GitHubアカウント
 - GitHub Desktop
 - Node.js 22
 - npm
-- Supabase アカウント
-- Vercel アカウント
-
-確認:
+- Supabaseアカウント
+- Vercelアカウント（本番デプロイ時）
 
 ```powershell
 node --version
 npm --version
 ```
 
-## 2. GitHub Desktop で Clone
+## 2. Clone
 
-1. GitHub Desktop を起動
-2. `File` → `Clone repository...`
-3. 対象リポジトリを選択
-4. Local path を決定
-5. `Clone`
+GitHub Desktop: `File` → `Clone repository...`
 
-コマンドの場合:
+または:
 
 ```bash
 git clone https://github.com/k-systems202208/nextjs-supabase-vercel-webapp-template.git
 cd nextjs-supabase-vercel-webapp-template
 ```
 
-## 3. 依存関係をインストール
+## 3. 依存関係
+
+`package-lock.json` がコミット済みなので通常は以下を使います。
 
 ```powershell
-npm install
+npm ci
 ```
 
-初回は `package-lock.json` が生成されます。内容を確認し、必ず Git 管理へ追加してください。
+依存バージョンを意図的に変更する場合だけ `npm install` を使い、更新されたlockfileもコミットします。
 
-以後は lockfile を使い、CI も `npm ci` に切り替えるのが基本です。
-
-## 4. Supabase 環境変数
+## 4. Supabase環境変数
 
 ```powershell
 Copy-Item .env.example .env.local
 ```
 
-`.env.local`:
-
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
+# NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
 ```
 
-値は Supabase Dashboard の Connect 画面から取得します。
+## 5. Database / RLS
 
-## 5. 起動
+Supabase Dashboard → SQL Editor で `supabase/schema.sql` を実行します。
+
+作成される `todos` は authenticatedユーザーにのみCRUD権限を付与し、RLSで本人の行だけを操作可能にします。
+
+## 6. Auth URL設定
+
+Supabase Dashboard → Authentication → URL Configuration でローカル開発用URLを登録します。
+
+```text
+Site URL: http://localhost:3000
+Redirect URL: http://localhost:3000/**
+```
+
+本番時はVercel Production URLも追加します。
+
+SSR用に確認メールをカスタマイズする場合は [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md) を参照してください。
+
+## 7. 起動
 
 ```powershell
 npm run dev
 ```
 
-- アプリ: `http://localhost:3000`
-- ヘルスチェック: `http://localhost:3000/api/health`
+- `/` 初期画面
+- `/auth/sign-up` アカウント作成
+- `/auth/login` ログイン
+- `/dashboard` Todo CRUD
+- `/api/health` ヘルスチェック
 
-Supabase未設定でもトップページは起動できます。
-
-## 6. 開発前チェック
+## 8. 品質チェック
 
 ```powershell
 npm run check
 ```
 
-すべて成功した状態を開発開始点とします。
+すべて成功した状態を開発開始点・完了条件にします。
 
-## 7. ChatGPT で開発する場合
+## 9. PWA確認
 
-ChatGPT に GitHub リポジトリを接続して、対象リポジトリと変更内容を明示します。
+Service WorkerはProductionでのみ登録します。
 
-例:
-
-```text
-@GitHub
-k-systems202208/<repository-name> を確認してください。
-○○機能を追加してください。
-修正後は lint / typecheck / test / build の観点で確認してください。
+```powershell
+npm run build
+npm start
 ```
 
-GitHub コネクタに Contents の書き込み権限がない場合、ChatGPT から直接コミットできません。その場合は生成された変更をローカルへ反映して GitHub Desktop から Push します。
+ブラウザのApplication/Manifest/Service Workersで確認します。Auth / Dashboard / APIはオフラインキャッシュ対象外です。
 
-## 8. Codex で開発する場合
+## 10. ChatGPT / Codex
 
-Codex では Clone 済みローカルリポジトリを作業ディレクトリとして開きます。
+ChatGPTは設計、GitHub内容確認、レビュー、Issue/PR管理に利用できます。接続権限によってコード書き込みができない場合は、ローカル変更をGitHub DesktopからPushします。
 
-作業依頼時には次を明示すると安定します。
+CodexではClone済みローカルリポジトリを作業ディレクトリとして開き、完了条件に `npm run check` を指定します。
 
-- 変更目的
-- 変更対象
-- 既存仕様を壊さないこと
-- テスト条件
-- `npm run check` を完了条件にすること
-
-## 9. Git の基本フロー
+## 11. Gitフロー
 
 ```text
 main
@@ -124,14 +125,11 @@ GitHub Actions CI
 merge
 ```
 
-小規模な個人開発でも、変更が大きい場合は feature branch を推奨します。
+## 12. CI成功報告ルール
 
-## 10. 開発完了時に確認するもの
+CI成功報告時は必ず次を併記します。
 
 - 修正ソース一覧
 - 修正ドキュメント一覧
 - 修正または追加したテスト一覧
-- CI 結果
-- Vercel Preview の確認（利用している場合）
-
-ドキュメントと実装が食い違わないよう、README と docs は随時更新します。
+- CI結果
