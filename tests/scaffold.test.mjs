@@ -8,6 +8,8 @@ const gitignore = read(".gitignore");
 const envExample = read(".env.example");
 const schema = read("supabase/schema.sql");
 const serviceWorker = read("public/sw.js");
+const readme = read("README.md");
+const customizing = read("docs/CUSTOMIZING.md");
 
 test("core dependencies are pinned", () => {
   for (const name of ["next", "react", "react-dom", "@supabase/ssr", "@supabase/supabase-js"]) {
@@ -64,4 +66,11 @@ test("service worker does not cache authenticated routes", () => {
   assert.match(serviceWorker, /pathname\.startsWith\("\/auth"\)/);
   assert.match(serviceWorker, /pathname\.startsWith\("\/dashboard"\)/);
   assert.match(serviceWorker, /pathname\.startsWith\("\/api"\)/);
+});
+
+test("template documents that Todo is replaceable sample code", () => {
+  assert.match(readme, /削除可能なサンプル/);
+  assert.match(readme, /docs\/CUSTOMIZING\.md/);
+  assert.match(customizing, /自由に削除・置換/);
+  assert.match(customizing, /このテンプレート本体へ追加しないもの/);
 });
