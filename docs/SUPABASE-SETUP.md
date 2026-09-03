@@ -10,6 +10,21 @@
 
 `todos` はCRUD/RLSを確認するための削除可能なサンプルです。独自アプリでは、動作確認後に自分のテーブルとRLSへ置き換えてください。
 
+## セットアップ全体像
+
+```mermaid
+flowchart TD
+    A["Supabaseアカウント"] --> B["Project作成"]
+    B --> C["Project URL / Publishable Key取得"]
+    C --> D[".env.local設定"]
+    D --> E["接続確認"]
+    E --> F["schema.sql実行"]
+    F --> G["Auth URL設定"]
+    G --> H["Sign up / Confirm / Login"]
+    H --> I["Todo CRUD / RLS確認"]
+    I --> J["Vercel本番設定"]
+```
+
 ---
 
 ## 1. Supabaseアカウントを準備する
@@ -37,6 +52,16 @@ Supabase Dashboardから新しいProjectを作成します。
 Database passwordはDB管理用の重要な秘密情報です。
 
 **このテンプレートの `.env.local` には設定しません。GitHubにもコミットしないでください。** パスワードマネージャーなどで安全に保管します。
+
+```mermaid
+flowchart LR
+    P["Supabase Project"] --> URL["Project URL"]
+    P --> KEY["Publishable Key"]
+    P --> PW["Database password"]
+    URL --> ENV[".env.local に設定"]
+    KEY --> ENV
+    PW --> SAFE["安全に保管 / ブラウザへ公開しない"]
+```
 
 Project作成後、Databaseなどの準備が完了するまで待ちます。
 
@@ -118,6 +143,15 @@ npm run dev
 http://localhost:3000/api/health
 ```
 
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant N as Next.js
+    B->>N: GET /api/health
+    N->>N: Supabase環境変数を確認
+    N-->>B: supabaseConfigured = true / false
+```
+
 Supabase環境変数が正しく読み込まれていれば、レスポンスの `supabaseConfigured` が `true` になります。
 
 `false` の場合は、次を確認します。
@@ -155,6 +189,14 @@ auth.uid() = user_id
 ```
 
 つまり、ログインユーザーは**自分自身のTodoだけ**を読み書きできます。
+
+```mermaid
+flowchart LR
+    U["ログインユーザー"] --> Q["Todoへアクセス"]
+    Q --> R{"auth.uid() = user_id ?"}
+    R -->|"一致"| OK["操作を許可"]
+    R -->|"不一致"| NG["RLSで拒否"]
+```
 
 ### SQL実行後の確認
 
@@ -196,6 +238,13 @@ http://localhost:3000/**
 ```
 
 このテンプレートのSign upは、確認後の戻り先として `/auth/confirm` を使用します。
+
+```mermaid
+flowchart LR
+    A["Sign up"] --> B["Supabase確認メール"]
+    B --> C["/auth/confirm"]
+    C --> D["/dashboard"]
+```
 
 ### 本番公開後
 
@@ -251,6 +300,23 @@ Authentication → Email Templates → Confirm signup
 ## 10. Sign up → Login → CRUDを確認する
 
 開発サーバーを起動した状態で、次の順に確認します。
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as Next.js App
+    participant S as Supabase Auth
+    participant M as Mailbox
+    U->>A: Sign up
+    A->>S: signUp(email, password)
+    S->>M: 確認メール送信
+    U->>M: 確認リンクを開く
+    M->>A: /auth/confirm
+    A->>S: verifyOtp / exchangeCodeForSession
+    S-->>A: Session確立
+    U->>A: Login
+    A-->>U: /dashboard
+```
 
 ### 10.1 Sign up
 
@@ -338,6 +404,17 @@ NEXT_PUBLIC_SITE_URL=https://my-app.vercel.app
 Preview環境では `NEXT_PUBLIC_SITE_URL` を本番URLへ固定しない運用も可能です。このテンプレートは未設定時にリクエストのOriginを利用します。
 
 環境変数を追加・変更した場合は、Vercelで再デプロイします。
+
+### 本番構成
+
+```mermaid
+flowchart LR
+    U["User"] --> V["Vercel / Next.js"]
+    V --> A["Supabase Auth"]
+    V --> D["Supabase Database"]
+    A --> M["Auth Email"]
+    D --> R["RLS"]
+```
 
 ## 13. 本番公開時のSupabase URL設定
 
@@ -427,6 +504,13 @@ RLS Policyだけでなく、PostgresのGRANTも必要です。Todoサンプル�
 Todoサンプルの動作確認が終わったら、[CUSTOMIZING.md](CUSTOMIZING.md) に沿って独自アプリへ置き換えます。
 
 特にDatabaseでは、Todo用RLSをコピーして終わりにせず、**そのアプリのデータ所有・共有・管理者権限を整理してからPolicyを設計してください。**
+
+```mermaid
+flowchart LR
+    T["Todoサンプル"] --> D["独自データモデル"]
+    D --> P["独自RLS Policy"]
+    P --> A["自分のアプリ"]
+```
 
 ## 公式ドキュメント
 
