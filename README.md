@@ -82,6 +82,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
 # NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
 ```
 
+Supabase Projectの作成、Project URL / Publishable Keyの取得、Database / RLS、Auth URL、確認メール、Vercel本番設定までの詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) を参照してください。
+
 サンプルCRUDを動かす場合は `supabase/schema.sql` を Supabase SQL Editor で実行します。
 
 Supabase未設定でもトップページと `/api/health` は起動できます。認証/CRUDはSupabase設定後に利用します。
@@ -108,6 +110,7 @@ Supabase未設定でもトップページと `/api/health` は起動できます
 ## ドキュメント
 
 - [GETTING-STARTED.md](GETTING-STARTED.md) - Cloneから開発開始まで
+- [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) - Supabase Project作成からAuth / Database / RLS / Vercel設定まで
 - [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) - サンプルから独自アプリへ作り替える手順
 - [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md) - Auth / CRUD / RLS
 - [docs/PWA.md](docs/PWA.md) - PWAとキャッシュ方針

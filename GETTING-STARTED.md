@@ -55,9 +55,29 @@ npm run dev
 
 この時点で `npm run check` が成功することを、カスタマイズ前の基準状態とします。
 
-## 5. Supabase環境変数
+## 5. Supabaseを設定する
 
-認証・サンプルCRUDを利用する場合は設定します。
+認証・サンプルCRUDを利用する場合はSupabaseを設定します。
+
+**初めてSupabaseを設定する場合は、[docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) を上から順に実施してください。**
+
+詳細手順には次を含みます。
+
+1. Supabaseアカウント / Organizationの準備
+2. 新規Project作成
+3. Project URL / Publishable Key取得
+4. `.env.local` 作成
+5. `/api/health` で接続確認
+6. `supabase/schema.sql` 実行
+7. Email / Password認証確認
+8. Site URL / Redirect URL設定
+9. 確認メール
+10. Sign up → Login → Todo CRUD確認
+11. Custom SMTPの注意点
+12. Vercel環境変数 / Production URL設定
+13. よくあるエラーの確認方法
+
+最小限のローカル環境変数は次です。
 
 ```powershell
 Copy-Item .env.example .env.local
@@ -69,6 +89,10 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
 # NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
 ```
 
+Project URL / Publishable KeyはSupabase Projectの **Connect** から取得します。
+
+Secret Key / `service_role` / Database passwordは `NEXT_PUBLIC_` へ設定しません。
+
 ## 6. サンプルDatabase / RLS
 
 Todoサンプルを動かして仕組みを確認したい場合だけ、Supabase Dashboard → SQL Editor で `supabase/schema.sql` を実行します。
@@ -76,6 +100,8 @@ Todoサンプルを動かして仕組みを確認したい場合だけ、Supabas
 作成される `todos` は authenticatedユーザーにのみCRUD権限を付与し、RLSで本人の行だけを操作可能にします。
 
 独自アプリでは、このSQLをそのまま業務DBとして使うのではなく、自分のテーブル設計・RLS Policyへ置き換えてください。
+
+詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) と [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md) を参照してください。
 
 ## 7. Auth URL設定
 
@@ -86,9 +112,9 @@ Site URL: http://localhost:3000
 Redirect URL: http://localhost:3000/**
 ```
 
-本番時はVercel Production URLも追加します。
+本番時はVercel Production URLも設定します。Vercel PreviewでAuthを確認する場合はPreview URLも許可します。
 
-SSR用に確認メールをカスタマイズする場合は [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md) を参照してください。
+確認メール・Vercel本番設定を含む詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) を参照してください。
 
 ## 8. サンプル機能の確認
 
@@ -102,6 +128,8 @@ npm run dev
 - `/offline` PWAオフライン画面
 
 ここまで動けば、Auth・RLS・CRUD・PWAの実装例が確認できています。
+
+Supabase設定後は、別ユーザーを2人作成し、一方のTodoが他方から見えないことまで確認するとRLSの動作確認になります。
 
 ## 9. 自分のアプリへ作り替える
 
