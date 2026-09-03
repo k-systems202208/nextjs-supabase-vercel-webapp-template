@@ -2,9 +2,7 @@
 
 ## GitHub連携
 
-Vercel で New Project を作成し、対象 GitHub リポジトリを Import します。
-
-基本的に Next.js は自動認識されるため、Framework Preset は `Next.js` のままで利用します。
+Vercel で New Project を作成し、対象 GitHub リポジトリを Import します。Framework Preset は `Next.js` のままで利用します。
 
 ## Environment Variables
 
@@ -12,12 +10,24 @@ Vercel Project Settings に以下を登録します。
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_SITE_URL`（推奨: Production URL）
 
 Production / Preview / Development の適用範囲を確認してください。
 
-## デプロイフロー
+## Supabase Auth URL
 
-推奨:
+Supabase Dashboard の Authentication URL Configuration へVercel URLを登録します。
+
+例:
+
+```text
+Site URL: https://your-app.vercel.app
+Redirect URL: https://your-app.vercel.app/**
+```
+
+Preview DeployでAuth確認する場合は、許可するPreview URLの運用方針も決めてください。
+
+## デプロイフロー
 
 ```text
 feature branch
@@ -37,14 +47,12 @@ Production deploy
 
 ## デプロイ後確認
 
-- トップページが表示される
-- `/api/health` が `status: ok` を返す
-- Supabase 設定済みなら `supabaseConfigured: true`
-- Auth 使用時はログイン・ログアウト・Cookie更新
-- Supabase RLS が意図どおり機能している
+- `/` が表示される
+- `/api/health` が `status: ok`
+- Login / Signup / Signout
+- 確認メールから `/auth/confirm` へ戻れる
+- Todo CRUD
+- 別ユーザーのTodoをRLSで参照・更新できない
+- PWA Manifest / Service Worker / Offline fallback
 
-## 将来の自動化
-
-安定稼働後に、必要であればローカル・社内環境への自動デプロイを追加できます。
-
-ただし Production のデプロイ経路とローカル同期は分離し、CI成功・レビュー・ロールバック方法を決めてから導入します。
+PWAのService WorkerはProductionでのみ登録します。VercelのHTTPS環境で確認してください。

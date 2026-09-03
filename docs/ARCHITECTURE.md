@@ -2,46 +2,55 @@
 
 ## 目的
 
-このテンプレートは「最小構成」「再利用しやすい」「セキュリティ上の危険な初期値を持たない」を優先します。
+このテンプレートは「再利用しやすい」「安全な初期値」「実案件の開始点として十分」を優先します。
 
 ## ディレクトリ
 
 ```text
 app/
-  api/health/route.ts  ヘルスチェック
-  layout.tsx           ルートレイアウト
-  page.tsx             初期画面
-lib/
-  supabase/
-    client.ts           Browser Client
-    server.ts           Server Client
-    proxy.ts            Auth Cookie 更新
-    env.ts              環境変数検証
-proxy.ts                Next.js 16 Proxy entry
-.github/workflows/
-  ci.yml                CI
-docs/                    運用ドキュメント
-tests/                   最小スモークテスト
+  api/health/route.ts      ヘルスチェック
+  auth/                    Login / Signup / Confirm
+  dashboard/               RLS付きTodo CRUD
+  offline/page.tsx         PWAオフライン画面
+  manifest.ts              Web App Manifest
+  layout.tsx               ルートレイアウト
+  page.tsx                 初期画面
+components/
+  pwa-register.tsx         Service Worker登録
+lib/supabase/
+  client.ts                Browser Client
+  server.ts                Server Client
+  proxy.ts                 Auth Cookie更新
+  env.ts                   環境変数検証
+public/
+  sw.js                    Service Worker
+  icon-*.png               PWAアイコン
+supabase/
+  schema.sql               Todo/RLS bootstrap SQL
+proxy.ts                    Next.js 16 Proxy entry
+.github/workflows/ci.yml    CI
+docs/                       運用ドキュメント
+tests/                      スモークテスト
 ```
 
 ## Server / Client の境界
 
-- Browser Component から Supabase を呼ぶ場合: `lib/supabase/client.ts`
+- Browser Component: `lib/supabase/client.ts`
 - Server Component / Server Action / Route Handler: `lib/supabase/server.ts`
-- Cookie のセッション更新: `proxy.ts` → `lib/supabase/proxy.ts`
+- Cookieセッション更新: `proxy.ts` → `lib/supabase/proxy.ts`
 
-Server Component で無理に Cookie を更新せず、Proxy をセッション更新の中心にします。
+## 多層防御
 
-## Auth と認可
+1. Proxy: Auth Cookie更新
+2. Server Component / Action: `getClaims()` で認証確認
+3. Supabase RLS: `auth.uid() = user_id` で最終認可
 
-Proxy はセッション Cookie の更新を担当しますが、それだけで認可済みとはみなしません。
+Proxyを通っただけで認可済みとはみなしません。
 
-保護ページ、Server Action、Route Handler は各処理でユーザー情報と権限を検証してください。
+## PWA
 
-DBアクセスでは RLS を認可の主要な防御層として利用します。
+PWAは公開シェルと静的アセットだけをキャッシュし、Auth / Dashboard / APIはキャッシュ対象外にします。
 
 ## UI
 
-テンプレートでは UI ライブラリを固定しません。
-
-Tailwind CSS、shadcn/ui 等は案件要件に応じて追加します。共通テンプレートに最初から大量の依存を持たせない方針です。
+テンプレートではUIライブラリを固定しません。Tailwind CSS、shadcn/ui等は案件要件に応じて追加します。

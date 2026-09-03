@@ -1,8 +1,8 @@
 # Next.js + Supabase + Vercel Web App Template
 
-Next.js App Router、Supabase、Vercel を使った Web アプリ開発をすぐに始めるための共通テンプレートです。
+Next.js App Router、Supabase、Vercel を使ったWebアプリ開発をすぐに始めるための共通テンプレートです。
 
-新規案件ごとに同じ初期設定を繰り返さず、Clone 後すぐに実装へ入れることを目的にしています。
+認証、所有者RLS付きCRUD、PWA、CIまでを初期実装し、新規案件ごとの定型セットアップを減らします。
 
 ## 技術構成
 
@@ -17,22 +17,25 @@ Next.js App Router、Supabase、Vercel を使った Web アプリ開発をすぐ
 
 ## 含まれるもの
 
-- Next.js App Router の最小構成
 - Supabase Browser / Server Client
-- Next.js 16 の `proxy.ts` による Supabase Auth セッション更新
-- Publishable Key 前提の環境変数テンプレート
-- `/api/health` ヘルスチェック
-- ESLint / TypeScript / スモークテスト / Build
+- `proxy.ts` によるCookie Authセッション更新
+- メール/パスワード Login / Signup / Confirm / Signout
+- `todos` サンプルCRUD
+- `auth.uid() = user_id` のRLS Policy
+- Data API向け明示GRANT
+- PWA Manifest / Service Worker / Offline fallback
+- `/api/health`
+- lint / typecheck / test / build
 - GitHub Actions CI
-- Vercel デプロイ手順
-- GitHub Desktop、ChatGPT、Codex を使った開発手順
+- Vercelデプロイ手順
+- GitHub Desktop / ChatGPT / Codex 開発手順
 
 ## クイックスタート
 
 ```bash
 git clone https://github.com/k-systems202208/nextjs-supabase-vercel-webapp-template.git
 cd nextjs-supabase-vercel-webapp-template
-npm install
+npm ci
 ```
 
 Windows PowerShell:
@@ -42,16 +45,25 @@ Copy-Item .env.example .env.local
 npm run dev
 ```
 
-`.env.local` に Supabase の Project URL と Publishable Key を設定します。
+`.env.local`:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
+# NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
 ```
 
-ブラウザで `http://localhost:3000` を開きます。
+次に `supabase/schema.sql` を Supabase SQL Editor で実行します。
 
-Supabase の設定前でもトップページと `/api/health` は起動できます。
+Supabase未設定でもトップページと `/api/health` は起動できます。認証/CRUDはSupabase設定後に利用します。
+
+## サンプルURL
+
+- `/auth/login` ログイン
+- `/auth/sign-up` サインアップ
+- `/dashboard` Todo CRUD（要ログイン）
+- `/offline` PWAオフライン画面
+- `/api/health` ヘルスチェック
 
 ## 開発コマンド
 
@@ -59,39 +71,31 @@ Supabase の設定前でもトップページと `/api/health` は起動でき�
 | --- | --- |
 | `npm run dev` | 開発サーバー起動 |
 | `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript 型チェック |
-| `npm test` | テンプレートのスモークテスト |
+| `npm run typecheck` | TypeScript型チェック |
+| `npm test` | スモークテスト |
 | `npm run build` | 本番ビルド |
-| `npm run check` | lint → typecheck → test → build を一括実行 |
+| `npm run check` | lint → typecheck → test → build |
 
 ## ドキュメント
 
-- [GETTING-STARTED.md](GETTING-STARTED.md) - Clone から開発開始まで
+- [GETTING-STARTED.md](GETTING-STARTED.md) - Cloneから開発開始まで
+- [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md) - Auth / CRUD / RLS
+- [docs/PWA.md](docs/PWA.md) - PWAとキャッシュ方針
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - 構成と設計方針
-- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - 日常の開発・Git・CI 運用
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Vercel デプロイ
-- [docs/SECURITY.md](docs/SECURITY.md) - Supabase / 環境変数のセキュリティ方針
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - 日常の開発・Git・CI
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Vercelデプロイ
+- [docs/SECURITY.md](docs/SECURITY.md) - セキュリティ方針
 
 ## CI
 
-`main` への Push および Pull Request で次を実行します。
+`main` へのPushおよびPull Requestで `npm ci` → lint → typecheck → test → build を実行します。
 
-1. 依存関係のインストール
-2. ESLint
-3. TypeScript 型チェック
-4. スモークテスト
-5. Next.js 本番ビルド
+## セキュリティ
 
-初回 `npm install` で `package-lock.json` が生成されたら、必ずリポジトリへコミットしてください。その後 CI の install を `npm ci` に切り替えることを推奨します。
+ブラウザで使用するのはPublishable Keyのみです。Secret Key / `service_role` / DB passwordを `NEXT_PUBLIC_` へ設定したりGitHubへコミットしたりしないでください。
 
-## Supabase の重要事項
-
-ブラウザで使用するのは **Publishable Key** のみです。
-
-`service_role` / Secret Key を `NEXT_PUBLIC_` 付きの環境変数へ設定したり、GitHub にコミットしたりしないでください。
-
-Database の公開 schema に作成するテーブルは原則 RLS (Row Level Security) を有効にし、用途に合った Policy を作成してください。
+認可はアプリ側チェックだけで完結させず、RLSを最終防御層として維持します。PWAもAuth / Dashboard / APIレスポンスをキャッシュしません。
 
 ## テンプレートとしての運用
 
-このリポジトリにはアプリ固有仕様を直接積み上げず、新しいアプリを始める際の土台として利用することを推奨します。
+このリポジトリ自体には案件固有仕様を積み上げず、新しいアプリを始める際の土台として利用することを推奨します。

@@ -1,12 +1,13 @@
+import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 const checks = [
-  "Next.js App Router",
-  "TypeScript strict mode",
-  "Supabase SSR client",
-  "Next.js 16 proxy.ts",
-  "GitHub Actions CI",
-  "Vercel ready",
+  "Next.js 16 App Router / TypeScript",
+  "Supabase SSR Cookie Auth",
+  "ログイン / サインアップ",
+  "RLS付きサンプルTodo CRUD",
+  "Installable PWA / Offline fallback",
+  "GitHub Actions CI / Vercel ready",
 ];
 
 export default function Home() {
@@ -18,14 +19,21 @@ export default function Home() {
         <p className="eyebrow">WEB APP STARTER</p>
         <h1>Next.js + Supabase + Vercel</h1>
         <p className="lead">
-          Clone 後すぐに開発を始めるための、最小で安全な共通テンプレートです。
+          認証・CRUD・RLS・PWA・CIまで含め、Clone後すぐに実案件の土台として使える共通テンプレートです。
         </p>
 
         <div className={`status ${configured ? "ok" : "warn"}`}>
           <strong>Supabase:</strong>{" "}
           {configured
-            ? "環境変数が設定されています。"
+            ? "環境変数が設定されています。認証サンプルを試せます。"
             : ".env.local を作成して接続情報を設定してください。"}
+        </div>
+
+        <div className="hero-actions">
+          <Link className="button primary" href={configured ? "/auth/login" : "/dashboard"}>
+            {configured ? "認証サンプルを開く" : "セットアップ状態を確認"}
+          </Link>
+          <Link className="button secondary" href="/dashboard">Todo Dashboard</Link>
         </div>
       </section>
 
@@ -39,12 +47,13 @@ export default function Home() {
       </section>
 
       <section className="card">
-        <h2>Next step</h2>
+        <h2>初回セットアップ</h2>
         <ol>
           <li><code>.env.example</code> を <code>.env.local</code> にコピー</li>
-          <li>Supabase の Project URL / Publishable Key を設定</li>
+          <li>Supabase Project URL / Publishable Key を設定</li>
+          <li><code>supabase/schema.sql</code> を SQL Editor で実行</li>
+          <li>Supabase Auth の Site URL / Redirect URLs を設定</li>
           <li><code>npm run check</code> で一括検証</li>
-          <li>GitHub へ Push して CI を確認</li>
         </ol>
       </section>
     </main>
