@@ -14,6 +14,32 @@
 
 Supabase Projectをまだ作成していない場合や、Project URL / Publishable Key、SQL Editor、Auth URL、確認メール、Custom SMTP、Vercel環境変数まで順番に設定したい場合は、先に [SUPABASE-SETUP.md](SUPABASE-SETUP.md) を実施してください。
 
+## Auth / CRUDの全体像
+
+```mermaid
+flowchart TD
+    A["Sign up"] --> B["確認メール"]
+    B --> C["/auth/confirm"]
+    C --> D["Login"]
+    D --> E["/dashboard"]
+    E --> F["Create Todo"]
+    E --> G["Update Todo"]
+    E --> H["Delete Todo"]
+```
+
+## 認証フロー
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as Next.js App
+    participant S as Supabase Auth
+    U->>A: Loginフォーム送信
+    A->>S: signInWithPassword
+    S-->>A: Session / Cookie
+    A-->>U: /dashboard へ遷移
+```
+
 ## Supabase Database
 
 Todoサンプルを利用する場合は、Supabase SQL Editor で `supabase/schema.sql` を実行します。
@@ -23,6 +49,17 @@ Todoサンプルを利用する場合は、Supabase SQL Editor で `supabase/sch
 独自アプリでは、実際のデータ所有関係・共有範囲・管理者権限に合わせてテーブルとPolicyを設計し直してください。
 
 SupabaseのData APIでテーブルを利用する場合、RLS PolicyだけでなくPostgres RoleへのGRANTも必要です。このサンプルでは必要な権限を `schema.sql` へ明示しています。
+
+### CRUDとRLSの関係
+
+```mermaid
+flowchart LR
+    U["ログインユーザー"] --> APP["Next.js Server Action"]
+    APP --> DB[("public.todos")]
+    DB --> RLS{"auth.uid() = user_id ?"}
+    RLS -->|"一致"| OK["SELECT / INSERT / UPDATE / DELETE 許可"]
+    RLS -->|"不一致"| NG["アクセス拒否"]
+```
 
 ## Auth URL設定
 
@@ -45,6 +82,20 @@ Redirect URL: http://localhost:3000/**
 
 - `token_hash` + `type` を `verifyOtp` で検証する方式
 - PKCEの `code` を `exchangeCodeForSession` で交換する方式
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant M as Mailbox
+    participant A as Next.js /auth/confirm
+    participant S as Supabase Auth
+    S->>M: Confirm signupメール
+    U->>M: 確認リンクを開く
+    M->>A: token_hash または code
+    A->>S: verifyOtp / exchangeCodeForSession
+    S-->>A: 認証完了
+    A-->>U: /dashboard へ遷移
+```
 
 まずはSupabase標準の確認メールで動作確認できます。SSR向けに確認メールテンプレートをカスタマイズする場合は、Supabase公式ドキュメントのToken Hashを使う方式を利用できます。
 
