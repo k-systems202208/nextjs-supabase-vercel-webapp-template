@@ -1,5 +1,17 @@
 # Security
 
+## セキュリティ全体像
+
+```mermaid
+flowchart LR
+    U["User / Browser"] --> N["Next.js"]
+    N --> A["Supabase Auth"]
+    N --> D["Supabase Database"]
+    D --> R["RLS"]
+    N --> P["Service Worker Cache Rules"]
+    E["Environment Variables"] --> N
+```
+
 ## Supabase API Key
 
 フロントエンドで使用可能:
@@ -15,6 +27,19 @@
 
 `NEXT_PUBLIC_` が付いた環境変数はブラウザへ公開される前提で扱います。
 
+```mermaid
+flowchart TD
+    A["Supabase接続情報"] --> P["公開してよい"]
+    A --> S["秘密情報"]
+    P --> P1["Project URL"]
+    P --> P2["Publishable Key"]
+    S --> S1["Secret Key"]
+    S --> S2["service_role"]
+    S --> S3["DB password"]
+    P --> ENV["NEXT_PUBLIC_* に設定可能"]
+    S --> NG["NEXT_PUBLIC_* に設定禁止"]
+```
+
 ## RLS
 
 Data APIからアクセスするテーブルではRLSを有効にします。`supabase/schema.sql` のTodoサンプルは、`authenticated` へ必要なGRANTだけを付与し、各操作で所有者条件を入れています。
@@ -22,6 +47,17 @@ Data APIからアクセスするテーブルではRLSを有効にします。`su
 `TO authenticated` だけでは所有者認可にはなりません。必ず `auth.uid()` 等で行単位の条件を設定します。
 
 UPDATE Policyでは `USING` と `WITH CHECK` の両方を設定します。
+
+```mermaid
+flowchart TD
+    U["Authenticated User"] --> APP["Next.js"]
+    APP --> DB["Data API / Database"]
+    DB --> G{"GRANTあり?"}
+    G -->|"No"| DENY1["権限拒否"]
+    G -->|"Yes"| R{"RLS Policyを満たす?"}
+    R -->|"No"| DENY2["行アクセス拒否"]
+    R -->|"Yes"| OK["データ操作を許可"]
+```
 
 ## Data API grants
 
@@ -34,6 +70,19 @@ UPDATE Policyでは `USING` と `WITH CHECK` の両方を設定します。
 ## Auth session
 
 `@supabase/ssr` の Cookie-based Auth を利用し、Proxyで `getClaims()` を呼びトークンを検証・更新します。Supabaseがセッション更新時に渡すanti-cache headersもResponseへ引き継ぎます。
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant P as Proxy
+    participant S as Supabase Auth
+    participant A as App Router
+    B->>P: Request + Cookie
+    P->>S: getClaims()
+    S-->>P: 検証 / 更新結果
+    P->>A: 更新済みCookieでRequest継続
+    A-->>B: Response
+```
 
 ## PWA cache
 

@@ -11,6 +11,18 @@ const serviceWorker = read("public/sw.js");
 const readme = read("README.md");
 const customizing = read("docs/CUSTOMIZING.md");
 const supabaseSetup = read("docs/SUPABASE-SETUP.md");
+const docsToVisualize = [
+  "README.md",
+  "GETTING-STARTED.md",
+  "docs/SUPABASE-SETUP.md",
+  "docs/AUTH-CRUD.md",
+  "docs/CUSTOMIZING.md",
+  "docs/ARCHITECTURE.md",
+  "docs/DEVELOPMENT.md",
+  "docs/DEPLOYMENT.md",
+  "docs/PWA.md",
+  "docs/SECURITY.md",
+];
 
 test("core dependencies are pinned", () => {
   for (const name of ["next", "react", "react-dom", "@supabase/ssr", "@supabase/supabase-js"]) {
@@ -84,4 +96,11 @@ test("detailed Supabase setup guide is linked and covers required configuration"
   assert.match(supabaseSetup, /Custom SMTP/);
   assert.match(supabaseSetup, /NEXT_PUBLIC_SITE_URL/);
   assert.match(supabaseSetup, /別ユーザー/);
+});
+
+test("all primary documents include Mermaid diagrams", () => {
+  for (const path of docsToVisualize) {
+    const content = read(path);
+    assert.match(content, /```mermaid[\s\S]*?```/, `${path} must include a Mermaid diagram`);
+  }
 });

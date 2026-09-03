@@ -4,6 +4,19 @@
 
 `todos` / `/dashboard` はSupabase Auth・CRUD・RLSを確認するためのサンプルです。サンプルをそのまま使う必要はありません。独自アプリへ作り替える手順は [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) を参照してください。
 
+## 全体フロー
+
+```mermaid
+flowchart TD
+    A["Clone"] --> B["npm ci"]
+    B --> C["npm run check"]
+    C --> D["Supabase設定"]
+    D --> E["サンプル機能確認"]
+    E --> F["独自アプリへ置換"]
+    F --> G["npm run check"]
+    G --> H["PR / CI / merge"]
+```
+
 ## 1. 前提
 
 - GitHubアカウント
@@ -50,6 +63,14 @@ npm run check
 npm run dev
 ```
 
+```mermaid
+flowchart LR
+    A["開発サーバー起動"] --> B["/  初期画面"]
+    A --> C["/api/health  ヘルスチェック"]
+    B --> D["テンプレートが起動することを確認"]
+    C --> E["status: ok を確認"]
+```
+
 - `/` 初期画面
 - `/api/health` ヘルスチェック
 
@@ -77,6 +98,15 @@ npm run dev
 12. Vercel環境変数 / Production URL設定
 13. よくあるエラーの確認方法
 
+```mermaid
+flowchart LR
+    A["Supabase Project"] --> B["URL / Publishable Key"]
+    B --> C[".env.local"]
+    C --> D["schema.sql"]
+    D --> E["Auth URL"]
+    E --> F["Sign up / Login"]
+```
+
 最小限のローカル環境変数は次です。
 
 ```powershell
@@ -99,6 +129,13 @@ Todoサンプルを動かして仕組みを確認したい場合だけ、Supabas
 
 作成される `todos` は authenticatedユーザーにのみCRUD権限を付与し、RLSで本人の行だけを操作可能にします。
 
+```mermaid
+flowchart LR
+    U["ログインユーザー"] --> P{"auth.uid() = user_id ?"}
+    P -->|"一致"| OK["自分のTodoを操作可能"]
+    P -->|"不一致"| NG["アクセス拒否"]
+```
+
 独自アプリでは、このSQLをそのまま業務DBとして使うのではなく、自分のテーブル設計・RLS Policyへ置き換えてください。
 
 詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) と [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md) を参照してください。
@@ -117,6 +154,15 @@ Redirect URL: http://localhost:3000/**
 確認メール・Vercel本番設定を含む詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) を参照してください。
 
 ## 8. サンプル機能の確認
+
+```mermaid
+flowchart TD
+    A["/auth/sign-up"] --> B["確認メール"]
+    B --> C["/auth/confirm"]
+    C --> D["/auth/login"]
+    D --> E["/dashboard"]
+    E --> F["Todo追加 / 更新 / 削除"]
+```
 
 ```powershell
 npm run dev
@@ -153,6 +199,15 @@ Todoを使わないアプリなら、`/dashboard`、Todo用Server Action、`publ
 npm run check
 ```
 
+```mermaid
+flowchart LR
+    A["変更"] --> B["lint"]
+    B --> C["typecheck"]
+    C --> D["test"]
+    D --> E["build"]
+    E --> F["完了"]
+```
+
 すべて成功した状態を開発開始点・完了条件にします。
 
 ## 11. PWA確認
@@ -183,22 +238,15 @@ GitHub Appに対象リポジトリのアクセス権が付与されている場�
 
 ## 13. Gitフロー
 
-```text
-main
-  ↓
-feature/xxxx
-  ↓
-実装
-  ↓
-npm run check
-  ↓
-commit / push
-  ↓
-Pull Request
-  ↓
-GitHub Actions CI
-  ↓
-merge
+```mermaid
+flowchart LR
+    M["main"] --> F["feature/xxxx"]
+    F --> I["実装"]
+    I --> C["npm run check"]
+    C --> P["commit / push"]
+    P --> R["Pull Request"]
+    R --> G["GitHub Actions CI"]
+    G --> X["merge"]
 ```
 
 ## 14. CI成功報告ルール
