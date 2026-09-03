@@ -4,6 +4,18 @@ Next.js App Router、Supabase、Vercel を使ったWebアプリ開発をすぐ�
 
 認証、所有者RLS付きCRUD、PWA、CIまでを初期実装し、新規案件ごとの定型セットアップを減らします。第三者がこのリポジトリをCloneし、サンプル機能を削除・置換して、用途を問わず自分のWebアプリを作ることを前提にしています。
 
+## このテンプレートの全体像
+
+```mermaid
+flowchart LR
+    A["Clone / Use this template"] --> B["npm ci"]
+    B --> C["Supabase設定"]
+    C --> D["認証・RLS付きサンプル確認"]
+    D --> E["独自アプリへ作り替え"]
+    E --> F["GitHub Actions CI"]
+    F --> G["Vercelデプロイ"]
+```
+
 ## このテンプレートの考え方
 
 このリポジトリは完成済みTodoアプリではありません。
@@ -30,6 +42,26 @@ Next.js App Router、Supabase、Vercel を使ったWebアプリ開発をすぐ�
 - RLS Policy
 - PWA名・説明・アイコン
 - ドメイン・環境変数
+
+### 残すもの / 置き換えるもの
+
+```mermaid
+flowchart TD
+    T["共通テンプレート"] --> K["原則として残す"]
+    T --> R["案件ごとに置き換える"]
+
+    K --> K1["Next.js App Router"]
+    K --> K2["Supabase接続・Auth基盤"]
+    K --> K3["RLS前提の安全設計"]
+    K --> K4["PWA基本構成"]
+    K --> K5["CI / 品質チェック"]
+
+    R --> R1["画面・UI"]
+    R --> R2["Todoサンプル"]
+    R --> R3["業務テーブル / RLS"]
+    R --> R4["アプリ名 / PWA情報"]
+    R --> R5["ドメイン / 環境変数"]
+```
 
 具体的な作り替え手順は [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) を参照してください。
 
@@ -109,6 +141,15 @@ Supabase未設定でもトップページと `/api/health` は起動できます
 
 ## ドキュメント
 
+初めて利用する場合は、次の順で読むと全体を追いやすくなります。
+
+```mermaid
+flowchart LR
+    A["GETTING-STARTED"] --> B["SUPABASE-SETUP"]
+    B --> C["CUSTOMIZING"]
+    C --> D["DEPLOYMENT"]
+```
+
 - [GETTING-STARTED.md](GETTING-STARTED.md) - Cloneから開発開始まで
 - [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) - Supabase Project作成からAuth / Database / RLS / Vercel設定まで
 - [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) - サンプルから独自アプリへ作り替える手順
@@ -122,6 +163,16 @@ Supabase未設定でもトップページと `/api/health` は起動できます
 ## CI
 
 `main` へのPushおよびPull Requestで `npm ci` → lint → typecheck → test → build を実行します。
+
+```mermaid
+flowchart LR
+    P["Push / Pull Request"] --> I["npm ci"]
+    I --> L["lint"]
+    L --> T["typecheck"]
+    T --> S["test"]
+    S --> B["build"]
+    B --> OK["CI Success"]
+```
 
 ## セキュリティ
 
