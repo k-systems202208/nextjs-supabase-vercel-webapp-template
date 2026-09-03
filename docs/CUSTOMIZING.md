@@ -4,6 +4,24 @@
 
 `todos` / `/dashboard` はAuth・CRUD・RLSを確認するためのサンプルです。新しいアプリでは自由に削除・置換してください。
 
+## カスタマイズの全体像
+
+```mermaid
+flowchart TD
+    T["共通テンプレート"] --> K["残す共通基盤"]
+    T --> C["案件ごとに変更"]
+
+    K --> K1["Next.js / Supabase接続"]
+    K --> K2["Authセッション更新"]
+    K --> K3["RLS前提の設計"]
+    K --> K4["CI / 品質チェック"]
+
+    C --> C1["アプリ名 / UI"]
+    C --> C2["Todoサンプル"]
+    C --> C3["Database / RLS"]
+    C --> C4["PWA / URL / 環境変数"]
+```
+
 ## 1. 最初に決めること
 
 Clone後、実装を始める前に最低限以下を決めます。
@@ -16,6 +34,14 @@ Clone後、実装を始める前に最低限以下を決めます。
 - 公開範囲
 - PWAが必要か
 - 本番URL
+
+```mermaid
+flowchart LR
+    A["目的 / 利用者"] --> B["認証要否"]
+    B --> C["データ設計"]
+    C --> D["公開範囲 / RLS"]
+    D --> E["PWA / 本番URL"]
+```
 
 ## 2. アプリ名・説明を変更する
 
@@ -45,6 +71,14 @@ app/dashboard/actions.ts
 supabase/schema.sql 内の public.todos
 ```
 
+```mermaid
+flowchart TD
+    T["Todoサンプル"] --> P["app/dashboard/page.tsx"]
+    T --> A["app/dashboard/actions.ts"]
+    T --> S["supabase/schema.sql"]
+    T --> D["Todo関連テスト / ドキュメント"]
+```
+
 Todoを削除した場合は、関連するテストとドキュメントも同時に更新してください。
 
 認証後のトップページとして `/dashboard` を別用途に再利用しても構いません。
@@ -66,6 +100,14 @@ create table public.items (
 
 ただし、サンプルSQLを機械的にコピーするのではなく、実際のデータ所有関係に合わせて設計してください。
 
+```mermaid
+flowchart LR
+    A["public.todos"] --> B["独自テーブル"]
+    B --> C["所有者 / 共有範囲"]
+    C --> D["GRANT"]
+    D --> E["RLS Policy"]
+```
+
 ## 6. RLSを設計する
 
 公開schemaの業務テーブルでは、原則としてRLSを有効化します。
@@ -83,6 +125,15 @@ using (auth.uid() = user_id)
 共有データ、管理者データ、組織単位データでは必要なPolicyが異なります。アプリ要件に合わせて設計してください。
 
 アプリ側の画面制御だけを認可境界にせず、DBのRLSを最終防御層として維持します。
+
+```mermaid
+flowchart TD
+    U["ユーザー"] --> APP["画面 / Server Action"]
+    APP --> DB["Database"]
+    DB --> RLS{"RLS Policy"}
+    RLS -->|"許可"| OK["データ操作"]
+    RLS -->|"拒否"| NG["アクセス拒否"]
+```
 
 ## 7. 認証を使わない場合
 
@@ -150,6 +201,15 @@ Supabase Authを使う場合は、Vercel Production URLをSupabase Authenticatio
 
 ```powershell
 npm run check
+```
+
+```mermaid
+flowchart LR
+    A["カスタマイズ"] --> B["lint"]
+    B --> C["typecheck"]
+    C --> D["test"]
+    D --> E["build"]
+    E --> F["GitHub Actions CI"]
 ```
 
 さらに確認します。
