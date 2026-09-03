@@ -10,6 +10,7 @@ const schema = read("supabase/schema.sql");
 const serviceWorker = read("public/sw.js");
 const readme = read("README.md");
 const customizing = read("docs/CUSTOMIZING.md");
+const supabaseSetup = read("docs/SUPABASE-SETUP.md");
 
 test("core dependencies are pinned", () => {
   for (const name of ["next", "react", "react-dom", "@supabase/ssr", "@supabase/supabase-js"]) {
@@ -73,4 +74,14 @@ test("template documents that Todo is replaceable sample code", () => {
   assert.match(readme, /docs\/CUSTOMIZING\.md/);
   assert.match(customizing, /自由に削除・置換/);
   assert.match(customizing, /このテンプレート本体へ追加しないもの/);
+});
+
+test("detailed Supabase setup guide is linked and covers required configuration", () => {
+  assert.match(readme, /docs\/SUPABASE-SETUP\.md/);
+  assert.match(supabaseSetup, /Project URLとPublishable Key/);
+  assert.match(supabaseSetup, /supabase\/schema\.sql/);
+  assert.match(supabaseSetup, /Authentication → URL Configuration/);
+  assert.match(supabaseSetup, /Custom SMTP/);
+  assert.match(supabaseSetup, /NEXT_PUBLIC_SITE_URL/);
+  assert.match(supabaseSetup, /別ユーザー/);
 });
