@@ -4,6 +4,19 @@
 
 このテンプレートは「再利用しやすい」「安全な初期値」「実案件の開始点として十分」を優先します。
 
+## システム全体像
+
+```mermaid
+flowchart LR
+    U["Browser"] --> N["Next.js App Router"]
+    N --> P["proxy.ts"]
+    N --> SB["Supabase Client"]
+    SB --> SA["Supabase Auth"]
+    SB --> DB["Supabase Database"]
+    N --> SW["Service Worker"]
+    N --> V["Vercel"]
+```
+
 ## ディレクトリ
 
 ```text
@@ -33,11 +46,45 @@ docs/                       運用ドキュメント
 tests/                      スモークテスト
 ```
 
+```mermaid
+flowchart TD
+    ROOT["Repository"] --> APP["app/"]
+    ROOT --> LIB["lib/supabase/"]
+    ROOT --> COMP["components/"]
+    ROOT --> PUB["public/"]
+    ROOT --> SUPA["supabase/"]
+    ROOT --> GH[".github/workflows/"]
+    ROOT --> DOCS["docs/"]
+    ROOT --> TESTS["tests/"]
+
+    APP --> AUTH["auth/"]
+    APP --> DASH["dashboard/"]
+    APP --> API["api/health/"]
+    LIB --> CLIENT["client.ts"]
+    LIB --> SERVER["server.ts"]
+    LIB --> PROXYLIB["proxy.ts"]
+```
+
 ## Server / Client の境界
 
 - Browser Component: `lib/supabase/client.ts`
 - Server Component / Server Action / Route Handler: `lib/supabase/server.ts`
 - Cookieセッション更新: `proxy.ts` → `lib/supabase/proxy.ts`
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant P as proxy.ts
+    participant A as App Router
+    participant S as Supabase
+    B->>P: Request
+    P->>S: Cookie / Token確認・更新
+    S-->>P: 更新結果
+    P->>A: Requestを引き渡す
+    A->>S: 必要なAuth / Dataアクセス
+    S-->>A: Result
+    A-->>B: Response
+```
 
 ## 多層防御
 
@@ -46,6 +93,16 @@ tests/                      スモークテスト
 3. Supabase RLS: `auth.uid() = user_id` で最終認可
 
 Proxyを通っただけで認可済みとはみなしません。
+
+```mermaid
+flowchart TD
+    R["Request"] --> P["Proxy: Cookie更新"]
+    P --> S["Server: getClaims()"]
+    S --> D["Databaseアクセス"]
+    D --> RLS{"RLS Policy"}
+    RLS -->|"許可"| OK["データ操作"]
+    RLS -->|"拒否"| NG["アクセス拒否"]
+```
 
 ## PWA
 
