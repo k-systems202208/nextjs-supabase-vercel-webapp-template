@@ -61,7 +61,9 @@ flowchart LR
     Q --> L["lint / typecheck"]
     L --> T["test"]
     T --> B["build"]
-    B --> OK["CI Success"]
+    B --> S["sample削除"]
+    S --> Q2["npm run check"]
+    Q2 --> OK["CI Success"]
 ```
 
 CIもローカルと同じ `npm run check` を品質ゲートの入口にします。
@@ -80,6 +82,21 @@ tests/template-lifecycle.test.mjs  開発・運用・拡張契約テスト
 Todoサンプルを削除する場合は `tests/sample.test.mjs` も一緒に削除します。`tests/core.test.mjs`、doctor、lifecycleテストはTodo固有ファイルの存在に依存しないため、独自アプリでも原則として残します。
 
 新しい業務機能を追加した場合は、その機能のテストを別ファイルとして追加してください。拡張方針は [EXTENDING.md](EXTENDING.md) を参照してください。
+
+## Template smoke test
+
+通常の品質ゲートに加え、CIでは一時workspace上で次のTodoサンプルを削除します。
+
+```text
+app/(sample)/dashboard/
+features/todos/
+supabase/sample/todos.sql
+tests/sample.test.mjs
+```
+
+その状態でもう一度 `npm run check` を実行し、共通基盤がTodoサンプルへ依存していないことを確認します。
+
+テンプレートの大きな構成変更時には、自動CIだけでなく **Use this template → Clone → 基準check → sample削除 → 独自feature → Pull Request** までを手動で通します。詳細は [TEMPLATE-SMOKE-TEST.md](TEMPLATE-SMOKE-TEST.md) を参照してください。
 
 ## Database変更
 
