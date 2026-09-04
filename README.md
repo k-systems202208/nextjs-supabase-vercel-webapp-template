@@ -44,10 +44,8 @@ Todoサンプルは、共通基盤から分離して次の場所へまとめて�
 app/(sample)/dashboard/       Todoサンプル画面（URLは /dashboard）
 features/todos/               Todo用Server Action
 supabase/sample/todos.sql     Todoテーブル / GRANT / RLS
- tests/sample.test.mjs         Todoサンプル専用テスト
+tests/sample.test.mjs         Todoサンプル専用テスト
 ```
-
-> 上記の先頭空白は表示上のものです。実際のパスは `tests/sample.test.mjs` です。
 
 Todoを使わない新規アプリでは、上記のサンプル一式を削除し、自分の画面・業務処理・Database/RLS・テストへ置き換えます。共通テスト `tests/core.test.mjs` はTodoサンプルの存在に依存しません。
 
