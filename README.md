@@ -9,13 +9,13 @@ Next.js App Router、Supabase、Vercel を使ったWebアプリ開発をすぐ�
 ```mermaid
 flowchart LR
     A["Use this template / Clone"] --> B["npm ci"]
-    B --> C["Supabase設定"]
+    B --> C["doctor / Supabase設定"]
     C --> D["共通基盤を確認"]
     D --> E["Todoサンプルを確認"]
-    E --> F["独自アプリへ作り替え"]
+    E --> F["独自featureへ作り替え"]
     F --> G["npm run check"]
     G --> H["GitHub Actions CI"]
-    H --> I["Vercelデプロイ"]
+    H --> I["Vercelデプロイ / 運用"]
 ```
 
 ## このテンプレートの考え方
@@ -31,10 +31,12 @@ flowchart LR
 - Login / Sign up / Confirm の認証実装例
 - PWAの基本構成
 - `/api/health`
+- `npm run doctor` による環境診断
 - lint / typecheck / test / build
 - GitHub Actions CI
 - Dependabot
-- Vercelデプロイ手順
+- Vercelデプロイ・運用Runbook
+- feature拡張の共通契約
 
 ### 削除・置換できるTodoサンプル
 
@@ -57,7 +59,8 @@ flowchart TD
     K --> K1["Next.js / Supabase接続"]
     K --> K2["Auth / RLS方針"]
     K --> K3["PWA"]
-    K --> K4["Quality / CI"]
+    K --> K4["Doctor / Quality / CI"]
+    K --> K5["Operations / Extension contract"]
 
     S --> S1["app/(sample)/dashboard"]
     S --> S2["features/todos"]
@@ -88,10 +91,12 @@ flowchart TD
 - Data API向け明示GRANTサンプル
 - PWA Manifest / Service Worker / Offline fallback
 - `/api/health`
+- `npm run doctor`
 - lint / typecheck / test / build
 - GitHub Actions CI
 - Dependabotによる依存関係の月次確認
-- Vercelデプロイ手順
+- Vercelデプロイ・運用手順
+- 独自featureの拡張ガイド
 - GitHub Desktop / ChatGPT / Codex 開発手順
 
 ## クイックスタート
@@ -110,6 +115,7 @@ Windows PowerShell:
 
 ```powershell
 Copy-Item .env.example .env.local
+npm run doctor
 npm run check
 npm run dev
 ```
@@ -121,6 +127,8 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
 # NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
 ```
+
+`npm run doctor` はNode.jsの対象Version、lockfile、env template、`.env.local` の主要設定を診断します。`.env.local` が未作成、またはSupabase値がサンプルのままの場合は警告しますが、共通トップとhealth確認だけを行う段階では致命的エラーにしません。
 
 Supabase Projectの作成、Project URL / Publishable Keyの取得、Auth URL、確認メール、Database / RLS、Vercel本番設定までの詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) を参照してください。
 
@@ -141,13 +149,14 @@ Supabase未設定でもトップページと `/api/health` は起動できます
 | コマンド | 内容 |
 | --- | --- |
 | `npm run dev` | 開発サーバー起動 |
+| `npm run doctor` | Node / lockfile / envの環境診断 |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript型チェック |
 | `npm test` | 共通基盤 + 現在含まれているサンプルのテスト |
 | `npm run build` | 本番ビルド |
 | `npm run check` | lint → typecheck → test → build |
 
-Todoサンプルを削除する場合は `tests/sample.test.mjs` も同時に削除します。`tests/core.test.mjs` は残します。
+Todoサンプルを削除する場合は `tests/sample.test.mjs` も同時に削除します。`tests/core.test.mjs` と共通ライフサイクルのテストは残します。
 
 ## ドキュメント
 
@@ -156,31 +165,35 @@ Todoサンプルを削除する場合は `tests/sample.test.mjs` も同時に削
 ```mermaid
 flowchart LR
     A["GETTING-STARTED"] --> B["SUPABASE-SETUP"]
-    B --> C["CUSTOMIZING"]
+    B --> C["CUSTOMIZING / EXTENDING"]
     C --> D["DEPLOYMENT"]
+    D --> E["OPERATIONS"]
 ```
 
 - [GETTING-STARTED.md](GETTING-STARTED.md) - Cloneから開発開始まで
 - [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) - Supabase Project作成からAuth / Database / RLS / Vercel設定まで
 - [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) - サンプルから独自アプリへ作り替える手順
+- [docs/EXTENDING.md](docs/EXTENDING.md) - 独自feature追加時の共通契約
 - [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md) - Auth / CRUD / RLS
 - [docs/PWA.md](docs/PWA.md) - PWAとキャッシュ方針
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - 構成と設計方針
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - 日常の開発・Git・CI・依存関係更新
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Vercelデプロイ
+- [docs/OPERATIONS.md](docs/OPERATIONS.md) - デプロイ後の確認・障害切り分け・ロールバック
 - [docs/SECURITY.md](docs/SECURITY.md) - セキュリティ方針
 
 ## CI
 
-`main` へのPushおよびPull Requestで `npm ci` → lint → typecheck → test → build を実行します。
+`main` へのPushおよびPull Requestで `npm run doctor` → `npm ci` → `npm run check` を実行します。`npm run check` の中で lint → typecheck → test → build を順に実行するため、ローカルとCIの品質ゲートを同じ入口に揃えています。
 
 ```mermaid
 flowchart LR
-    P["Push / Pull Request"] --> I["npm ci"]
-    I --> L["lint"]
-    L --> T["typecheck"]
-    T --> S["core / sample tests"]
-    S --> B["build"]
+    P["Push / Pull Request"] --> D["doctor"]
+    D --> I["npm ci"]
+    I --> C["npm run check"]
+    C --> L["lint / typecheck"]
+    L --> T["core / sample / lifecycle tests"]
+    T --> B["build"]
     B --> OK["CI Success"]
 ```
 
@@ -200,7 +213,7 @@ ESLint 10は、Next.js 16系の `eslint-config-next` が正式対応するまで
 
 ## テンプレートとしての運用
 
-このリポジトリ自体には案件固有仕様を積み上げません。Todoサンプルは実装例として維持し、特定業務向けの機能追加は、このテンプレートから作成した各アプリ側で行います。
+このリポジトリ自体には案件固有仕様を積み上げません。Todoサンプルは実装例として維持し、特定業務向けの機能追加は、このテンプレートから作成した各アプリ側で行います。運用時は [docs/OPERATIONS.md](docs/OPERATIONS.md)、新しいfeature追加時は [docs/EXTENDING.md](docs/EXTENDING.md) を基準にします。
 
 ## License
 
