@@ -6,6 +6,9 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 const packageJson = JSON.parse(read("package.json"));
 const ci = read(".github/workflows/ci.yml");
 const readme = read("README.md");
+const gettingStarted = read("GETTING-STARTED.md");
+const development = read("docs/DEVELOPMENT.md");
+const beginnerGuide = read("BEGINNER-GUIDE.md");
 const operations = read("docs/OPERATIONS.md");
 const extending = read("docs/EXTENDING.md");
 
@@ -30,7 +33,22 @@ test("extension guide keeps domain features outside the common core", () => {
   assert.match(extending, /npm run check/);
 });
 
-test("README links operations and extension guidance", () => {
+test("beginner guide explains the full GitHub Desktop workflow", () => {
+  assert.equal(existsSync(new URL("../BEGINNER-GUIDE.md", import.meta.url)), true);
+  assert.match(beginnerGuide, /GitHub Desktop/);
+  assert.match(beginnerGuide, /Commit/);
+  assert.match(beginnerGuide, /Push/);
+  assert.match(beginnerGuide, /Pull Request/);
+  assert.match(beginnerGuide, /CI/);
+  assert.match(beginnerGuide, /Squash Merge/);
+  assert.match(beginnerGuide, /Conflict/);
+  assert.match(beginnerGuide, /ChatGPT \/ Codex/);
+});
+
+test("README, Getting Started and Development link beginner guidance", () => {
+  assert.match(readme, /BEGINNER-GUIDE\.md/);
+  assert.match(gettingStarted, /BEGINNER-GUIDE\.md/);
+  assert.match(development, /BEGINNER-GUIDE\.md/);
   assert.match(readme, /docs\/OPERATIONS\.md/);
   assert.match(readme, /docs\/EXTENDING\.md/);
   assert.match(readme, /npm run doctor/);

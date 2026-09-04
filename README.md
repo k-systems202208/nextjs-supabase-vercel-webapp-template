@@ -4,6 +4,8 @@ Next.js App Router、Supabase、Vercel を使ったWebアプリ開発をすぐ�
 
 認証、RLSを前提としたSupabase接続、PWA、品質チェック、CIまでを共通基盤として初期実装し、Todo CRUDは仕組みを確認するための**削除可能なサンプル**として分離しています。第三者がこのリポジトリから新しいアプリを作り、サンプルだけを削除・置換して利用することを前提にしています。
 
+> **Git / GitHubをほとんど使ったことがない場合は、最初に [BEGINNER-GUIDE.md](BEGINNER-GUIDE.md) を読んでください。** GitHub Desktopを使ったClone、Branch、Commit、Push、Pull Request、CI、Squash Mergeまでを、READMEを1行変更する練習付きで説明しています。
+
 ## このテンプレートの全体像
 
 ```mermaid
@@ -98,8 +100,11 @@ flowchart TD
 - Vercelデプロイ・運用手順
 - 独自featureの拡張ガイド
 - GitHub Desktop / ChatGPT / Codex 開発手順
+- Git初心者向けの使い方説明書
 
 ## クイックスタート
+
+Git / GitHubの操作に不安がある場合は、先に [BEGINNER-GUIDE.md](BEGINNER-GUIDE.md) の練習を1回行ってください。
 
 新しいアプリを作る場合はGitHubの **Use this template** から自分用リポジトリを作成し、そのリポジトリをCloneする方法を推奨します。
 
@@ -158,29 +163,46 @@ Supabase未設定でもトップページと `/api/health` は起動できます
 
 Todoサンプルを削除する場合は `tests/sample.test.mjs` も同時に削除します。`tests/core.test.mjs` と共通ライフサイクルのテストは残します。
 
-## ドキュメント
+## ドキュメント - 目的から選ぶ
 
-初めて利用する場合は、次の順で読むと全体を追いやすくなります。
+「上から全部読む」のではなく、今やりたいことに合わせて選んでください。
 
 ```mermaid
-flowchart LR
-    A["GETTING-STARTED"] --> B["SUPABASE-SETUP"]
-    B --> C["CUSTOMIZING / EXTENDING"]
-    C --> D["DEPLOYMENT"]
-    D --> E["OPERATIONS"]
+flowchart TD
+    Q{"何をしたい?"}
+    Q -->|"Gitも初めて"| B["BEGINNER-GUIDE"]
+    Q -->|"まず起動したい"| G["GETTING-STARTED"]
+    Q -->|"自分のアプリに変えたい"| C["CUSTOMIZING / EXTENDING"]
+    Q -->|"技術を理解したい"| A["ARCHITECTURE / SUPABASE / AUTH / PWA / SECURITY"]
+    Q -->|"公開・運用したい"| O["DEPLOYMENT / OPERATIONS"]
 ```
 
-- [GETTING-STARTED.md](GETTING-STARTED.md) - Cloneから開発開始まで
-- [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) - Supabase Project作成からAuth / Database / RLS / Vercel設定まで
-- [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) - サンプルから独自アプリへ作り替える手順
+### 初めて使う
+
+- [BEGINNER-GUIDE.md](BEGINNER-GUIDE.md) - Git / GitHub / GitHub Desktopをゼロから説明し、最初のPRを練習
+- [GETTING-STARTED.md](GETTING-STARTED.md) - Clone後のセットアップ、初回起動、Supabase設定への導線
+
+### 自分のアプリへ変える
+
+- [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) - Todoサンプルを削除・置換して独自アプリへ作り替える
 - [docs/EXTENDING.md](docs/EXTENDING.md) - 独自feature追加時の共通契約
+
+### 技術を理解する
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - 構成と設計方針
+- [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) - Supabase Project作成、Auth、Database、RLS、Vercel設定
 - [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md) - Auth / CRUD / RLS
 - [docs/PWA.md](docs/PWA.md) - PWAとキャッシュ方針
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - 構成と設計方針
-- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - 日常の開発・Git・CI・依存関係更新
+- [docs/SECURITY.md](docs/SECURITY.md) - セキュリティ方針
+
+### 開発する
+
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - 日常のIssue / Branch / Git / CI / 依存関係更新
+
+### 公開・運用する
+
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Vercelデプロイ
 - [docs/OPERATIONS.md](docs/OPERATIONS.md) - デプロイ後の確認・障害切り分け・ロールバック
-- [docs/SECURITY.md](docs/SECURITY.md) - セキュリティ方針
 
 ## CI
 

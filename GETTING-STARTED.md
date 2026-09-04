@@ -2,6 +2,8 @@
 
 このドキュメントは、このテンプレートをCloneして動作確認し、そこから自分のWebアプリ開発を始めるための手順です。
 
+**Git / GitHub / GitHub Desktopの用語や、Branch → Commit → Push → Pull Request → CI → Mergeの流れがまだ分からない場合は、先に [BEGINNER-GUIDE.md](BEGINNER-GUIDE.md) を読んでください。**
+
 Todo CRUDは仕組みを確認するための**削除可能なサンプル**です。共通基盤とは分離しているため、独自アプリではサンプル一式だけを削除・置換できます。詳しくは [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) を参照してください。
 
 ## 全体フロー
@@ -59,7 +61,7 @@ npm run doctor
 
 - Node.jsが対象Versionか
 - `package.json` / `package-lock.json` / `.env.example` が揃っているか
-- `.env.local` がある場合、主要Supabase設定がサンプル値のままではないか
+- `.env.local` がある場合、主要Supabase環境変数がサンプル値のままではないか
 
 `.env.local` 未作成は警告です。Node.js対象外や必須Repositoryファイル欠落はFAILです。
 
@@ -298,6 +300,8 @@ Todoサンプルは削除して、○○管理アプリを実装してくださ�
 
 GitHub Appに対象リポジトリのアクセス権が付与されている場合は、ChatGPTからブランチ作成・Commit・PR・CI確認・mergeまで進められます。
 
+Git自体の操作や用語が分からない場合は [BEGINNER-GUIDE.md](BEGINNER-GUIDE.md) の「自分で編集する場合とChatGPT / Codexへ依頼する場合」を参照してください。
+
 ## 15. Gitフロー
 
 ```mermaid
@@ -310,6 +314,8 @@ flowchart LR
     R --> G["GitHub Actions CI"]
     G --> X["Squash merge"]
 ```
+
+Git / GitHub未経験者向けの用語説明とGitHub Desktop操作は [BEGINNER-GUIDE.md](BEGINNER-GUIDE.md) にまとめています。
 
 ## 16. デプロイ後の運用
 
