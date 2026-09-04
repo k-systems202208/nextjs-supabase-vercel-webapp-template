@@ -12,6 +12,7 @@ const beginnerGuide = read("BEGINNER-GUIDE.md");
 const githubSetup = read("docs/GITHUB-SETUP.md");
 const operations = read("docs/OPERATIONS.md");
 const extending = read("docs/EXTENDING.md");
+const smokeTest = read("docs/TEMPLATE-SMOKE-TEST.md");
 
 test("developer doctor is part of the template contract", () => {
   assert.equal(existsSync(new URL("../scripts/doctor.mjs", import.meta.url)), true);
@@ -54,11 +55,24 @@ test("GitHub setup guidance is part of the template documentation", () => {
   assert.match(githubSetup, /Squash Merge/);
 });
 
+test("sampleless smoke test protects the reusable common core", () => {
+  assert.equal(existsSync(new URL("../docs/TEMPLATE-SMOKE-TEST.md", import.meta.url)), true);
+  assert.match(ci, /Sampleless template smoke test/);
+  assert.match(ci, /app\/\(sample\)\/dashboard/);
+  assert.match(ci, /features\/todos/);
+  assert.match(ci, /tests\/sample\.test\.mjs/);
+  assert.match(smokeTest, /Use this template/);
+  assert.match(smokeTest, /npm run check/);
+  assert.match(smokeTest, /Pull Request/);
+});
+
 test("README, Getting Started and Development link beginner guidance", () => {
   assert.match(readme, /BEGINNER-GUIDE\.md/);
   assert.match(gettingStarted, /BEGINNER-GUIDE\.md/);
   assert.match(development, /BEGINNER-GUIDE\.md/);
   assert.match(readme, /docs\/OPERATIONS\.md/);
   assert.match(readme, /docs\/EXTENDING\.md/);
+  assert.match(readme, /docs\/TEMPLATE-SMOKE-TEST\.md/);
+  assert.match(development, /TEMPLATE-SMOKE-TEST\.md/);
   assert.match(readme, /npm run doctor/);
 });
