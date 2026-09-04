@@ -80,10 +80,11 @@ test("service worker does not cache authenticated routes", () => {
   assert.match(serviceWorker, /pathname\.startsWith\("\/api"\)/);
 });
 
-test("template documents that business samples are replaceable", () => {
+test("template documents the core and replaceable sample boundary", () => {
   assert.match(readme, /削除可能なサンプル/);
   assert.match(readme, /docs\/CUSTOMIZING\.md/);
-  assert.match(customizing, /自由に削除・置換/);
+  assert.match(customizing, /削除可能なサンプル/);
+  assert.match(customizing, /共通基盤とサンプルの境界/);
   assert.match(customizing, /このテンプレート本体へ追加しないもの/);
 });
 
