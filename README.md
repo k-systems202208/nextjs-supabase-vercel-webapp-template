@@ -36,6 +36,7 @@ flowchart LR
 - `npm run doctor` による環境診断
 - lint / typecheck / test / build
 - GitHub Actions CI
+- Todoサンプル削除後も成立するsampleless CI smoke test
 - GitHub推奨設定スクリプト / Protect main Ruleset
 - Dependabot
 - Vercelデプロイ・運用Runbook
@@ -69,7 +70,7 @@ flowchart TD
 
 ## 技術構成
 
-- Next.js 16.3.3 / App Router
+- Next.js 16.3.4 / App Router
 - React 19.2.8
 - TypeScript 5.9.3
 - Supabase (`@supabase/ssr` / `@supabase/supabase-js`)
@@ -169,6 +170,7 @@ flowchart TD
     Q -->|"まず起動したい"| G["GETTING-STARTED"]
     Q -->|"GitHubを安全に設定したい"| H["GITHUB-SETUP"]
     Q -->|"自分のアプリに変えたい"| C["CUSTOMIZING / EXTENDING"]
+    Q -->|"テンプレートとして受入確認したい"| S["TEMPLATE-SMOKE-TEST"]
     Q -->|"技術を理解したい"| A["ARCHITECTURE / SUPABASE / AUTH / PWA / SECURITY"]
     Q -->|"公開・運用したい"| O["DEPLOYMENT / OPERATIONS"]
 ```
@@ -179,10 +181,11 @@ flowchart TD
 - [GETTING-STARTED.md](GETTING-STARTED.md) - Clone後のセットアップ、初回起動、Supabase設定への導線
 - [docs/GITHUB-SETUP.md](docs/GITHUB-SETUP.md) - Ruleset / Required Check / Merge設定を自動適用
 
-### 自分のアプリへ変える
+### 自分のアプリへ変える・受入確認する
 
 - [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) - Todoサンプルを削除・置換して独自アプリへ作り替える
 - [docs/EXTENDING.md](docs/EXTENDING.md) - 独自feature追加時の共通契約
+- [docs/TEMPLATE-SMOKE-TEST.md](docs/TEMPLATE-SMOKE-TEST.md) - Use this templateからsample削除・PRまでの第三者利用受入テスト
 
 ### 技術を理解する
 
@@ -200,7 +203,7 @@ flowchart TD
 
 ## CI
 
-`main` へのPushおよびPull Requestで、GitHub設定スクリプトのBOM / PowerShell構文を確認した後、`npm run doctor` → `npm ci` → `npm run check` を実行します。`quality` がmainのRequired Status Checkです。
+`main` へのPushおよびPull Requestで、GitHub設定スクリプトのBOM / PowerShell構文を確認した後、`npm run doctor` → `npm ci` → `npm run check` を実行します。さらにCI workspace上でTodoサンプルを削除し、もう一度 `npm run check` を実行します。これにより**サンプルを外しても共通基盤が成立すること**を継続検証します。`quality` がmainのRequired Status Checkです。
 
 ## 依存関係の保守
 
