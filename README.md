@@ -88,6 +88,7 @@ flowchart TD
 - `/api/health`
 - lint / typecheck / test / build
 - GitHub Actions CI
+- Dependabotによる依存関係の月次確認
 - Vercelデプロイ手順
 - GitHub Desktop / ChatGPT / Codex 開発手順
 
@@ -156,7 +157,7 @@ flowchart LR
 - [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md) - Auth / CRUD / RLS
 - [docs/PWA.md](docs/PWA.md) - PWAとキャッシュ方針
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - 構成と設計方針
-- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - 日常の開発・Git・CI
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - 日常の開発・Git・CI・依存関係更新
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Vercelデプロイ
 - [docs/SECURITY.md](docs/SECURITY.md) - セキュリティ方針
 
@@ -174,6 +175,12 @@ flowchart LR
     B --> OK["CI Success"]
 ```
 
+## 依存関係の保守
+
+Dependabotで npm と GitHub Actions を月1回確認します。minor / patch はグループ化し、major update は個別に互換性を確認してから取り込みます。
+
+ESLint 10は、Next.js 16系の `eslint-config-next` が正式対応するまで強制更新しません。現時点ではESLint 9系を固定し、上流対応後にCIで互換性を確認したうえで移行します。詳細は [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) を参照してください。
+
 ## セキュリティ
 
 ブラウザで使用するのはPublishable Keyのみです。Secret Key / `service_role` / DB passwordを `NEXT_PUBLIC_` へ設定したりGitHubへコミットしたりしないでください。
@@ -183,3 +190,7 @@ flowchart LR
 ## テンプレートとしての運用
 
 このリポジトリ自体には案件固有仕様を積み上げません。サンプル機能は実装例として維持し、特定業務向けの機能追加は、このテンプレートから作成した各アプリ側で行います。
+
+## License
+
+MIT Licenseです。第三者はLICENSEの条件に従って、利用・変更・再配布できます。詳細は [LICENSE](LICENSE) を参照してください。

@@ -51,12 +51,50 @@ flowchart LR
     C --> D["Supabase CLI migration"]
 ```
 
+## 依存関係の更新
+
+`.github/dependabot.yml` で npm と GitHub Actions の更新を月1回確認します。
+
+- minor / patch は用途別にグループ化
+- major update は原則として個別に確認
+- Dependabot PRも通常のPRと同様にCI成功を必須条件として判断
+- 依存更新時は `package-lock.json` も同じPRで更新
+
+```mermaid
+flowchart LR
+    D["Dependabot 月次確認"] --> P["Update PR"]
+    P --> C["GitHub Actions CI"]
+    C --> R{"互換性確認"}
+    R -->|OK| M["merge"]
+    R -->|NG| H["保留 / 上流対応待ち"]
+```
+
+### ESLint 10について
+
+このテンプレートは現在 ESLint 9系を固定しています。ESLint 9自体はEOLですが、Next.js 16系の `eslint-config-next` は現時点でESLint 10の正式対応が完了しておらず、Next.js側の対応PRも未マージです。
+
+そのため、互換性を無視してESLint 10へ強制更新せず、Dependabotでは `eslint` のmajor updateを一時的にignoreします。Next.jsのstable版で正式対応が確認できた時点でignoreを削除し、`npm ci` / lint / typecheck / test / build をすべて通してからESLint 10へ移行します。
+
+## 公開テンプレートのRepository設定
+
+GitHub上では次の設定を推奨します。
+
+- Template repositoryを有効化
+- `main` はPull Request経由で更新
+- `quality` CI成功をmerge条件にする
+- Force pushを禁止
+- merge方式はsquashを基本とする
+- merge後の作業ブランチは削除する
+
+Repository設定はソースコードとは別管理のため、変更時はGitHub Settings側も確認してください。
+
 ## ブランチ
 
 - `main`: 安定版
 - `feature/<name>`: 新機能
 - `fix/<name>`: 不具合修正
 - `docs/<name>`: ドキュメントのみ
+- `chore/<name>`: 保守・設定変更
 
 ## Commit
 
