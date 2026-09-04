@@ -2,7 +2,7 @@
 
 このドキュメントは、このテンプレートをCloneして動作確認し、そこから自分のWebアプリ開発を始めるための手順です。
 
-`todos` / `/dashboard` はSupabase Auth・CRUD・RLSを確認するためのサンプルです。サンプルをそのまま使う必要はありません。独自アプリへ作り替える手順は [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) を参照してください。
+Todo CRUDは仕組みを確認するための**削除可能なサンプル**です。共通基盤とは分離しているため、独自アプリではサンプル一式だけを削除・置換できます。詳しくは [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) を参照してください。
 
 ## 全体フロー
 
@@ -11,10 +11,11 @@ flowchart TD
     A["Clone"] --> B["npm ci"]
     B --> C["npm run check"]
     C --> D["Supabase設定"]
-    D --> E["サンプル機能確認"]
-    E --> F["独自アプリへ置換"]
-    F --> G["npm run check"]
-    G --> H["PR / CI / merge"]
+    D --> E["共通基盤確認"]
+    E --> F["Todoサンプル確認"]
+    F --> G["独自アプリへ置換"]
+    G --> H["npm run check"]
+    H --> I["PR / CI / merge"]
 ```
 
 ## 1. 前提
@@ -42,7 +43,7 @@ git clone https://github.com/k-systems202208/nextjs-supabase-vercel-webapp-templ
 cd nextjs-supabase-vercel-webapp-template
 ```
 
-自分の新規アプリとして利用する場合は、GitHub上でこのテンプレートから新しいリポジトリを作成するか、Clone後に独自リポジトリへPushしてください。テンプレート本体へ案件固有コードを追加しないことを推奨します。
+自分の新規アプリとして利用する場合は、GitHub上で **Use this template** から新しいリポジトリを作成し、そのリポジトリをCloneする方法を推奨します。テンプレート本体へ案件固有コードを追加しません。
 
 ## 3. 依存関係
 
@@ -68,7 +69,7 @@ flowchart LR
     A["開発サーバー起動"] --> B["/  初期画面"]
     A --> C["/api/health  ヘルスチェック"]
     B --> D["テンプレートが起動することを確認"]
-    C --> E["status: ok を確認"]
+    C --> E["status確認"]
 ```
 
 - `/` 初期画面
@@ -89,7 +90,7 @@ flowchart LR
 3. Project URL / Publishable Key取得
 4. `.env.local` 作成
 5. `/api/health` で接続確認
-6. `supabase/schema.sql` 実行
+6. Todoサンプルを試す場合だけ `supabase/sample/todos.sql` 実行
 7. Email / Password認証確認
 8. Site URL / Redirect URL設定
 9. 確認メール
@@ -102,9 +103,8 @@ flowchart LR
 flowchart LR
     A["Supabase Project"] --> B["URL / Publishable Key"]
     B --> C[".env.local"]
-    C --> D["schema.sql"]
-    D --> E["Auth URL"]
-    E --> F["Sign up / Login"]
+    C --> D["Auth設定"]
+    D --> E["必要ならTodo sample SQL"]
 ```
 
 最小限のローカル環境変数は次です。
@@ -123,9 +123,44 @@ Project URL / Publishable KeyはSupabase Projectの **Connect** から取得し�
 
 Secret Key / `service_role` / Database passwordは `NEXT_PUBLIC_` へ設定しません。
 
-## 6. サンプルDatabase / RLS
+## 6. 共通基盤とTodoサンプルの境界
 
-Todoサンプルを動かして仕組みを確認したい場合だけ、Supabase Dashboard → SQL Editor で `supabase/schema.sql` を実行します。
+このテンプレートでは、Todoサンプルを次の4か所へ分離しています。
+
+```text
+app/(sample)/dashboard/       Todoサンプル画面（URLは /dashboard）
+features/todos/               Todo用Server Action
+supabase/sample/todos.sql     Todoテーブル / GRANT / RLS
+tests/sample.test.mjs         Todoサンプル専用テスト
+```
+
+一方、次は共通基盤として原則残します。
+
+- `lib/supabase/` のBrowser / Server Client
+- `proxy.ts` とAuthセッション更新
+- `app/auth/` の認証実装例
+- `/api/health`
+- PWA基本構成
+- `tests/core.test.mjs`
+- lint / typecheck / build / CI
+
+```mermaid
+flowchart TD
+    T["Template"] --> C["Core"]
+    T --> S["Todo Sample"]
+    C --> C1["Supabase / Auth / PWA / CI"]
+    S --> S1["dashboard / todos / sample SQL / sample test"]
+```
+
+Todoを使わない場合は、サンプル4か所をまとめて削除して構いません。`tests/core.test.mjs` はTodoサンプルの存在を必須にしていません。
+
+## 7. TodoサンプルDatabase / RLS
+
+Todoサンプルを動かして仕組みを確認したい場合だけ、Supabase Dashboard → SQL Editor で次を実行します。
+
+```text
+supabase/sample/todos.sql
+```
 
 作成される `todos` は authenticatedユーザーにのみCRUD権限を付与し、RLSで本人の行だけを操作可能にします。
 
@@ -140,7 +175,7 @@ flowchart LR
 
 詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) と [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md) を参照してください。
 
-## 7. Auth URL設定
+## 8. Auth URL設定
 
 Supabase Dashboard → Authentication → URL Configuration でローカル開発用URLを登録します。
 
@@ -153,7 +188,9 @@ Redirect URL: http://localhost:3000/**
 
 確認メール・Vercel本番設定を含む詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) を参照してください。
 
-## 8. サンプル機能の確認
+## 9. サンプル機能の確認
+
+Todoサンプルを残している場合は、次の流れを確認できます。
 
 ```mermaid
 flowchart TD
@@ -173,25 +210,24 @@ npm run dev
 - `/dashboard` Todo CRUD
 - `/offline` PWAオフライン画面
 
-ここまで動けば、Auth・RLS・CRUD・PWAの実装例が確認できています。
-
 Supabase設定後は、別ユーザーを2人作成し、一方のTodoが他方から見えないことまで確認するとRLSの動作確認になります。
 
-## 9. 自分のアプリへ作り替える
+## 10. 自分のアプリへ作り替える
 
-次は [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) に沿って、以下を自分のアプリ用に置き換えます。
+次は [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) に沿って、自分のアプリ用に置き換えます。
 
-1. アプリ名・説明
-2. トップページ・UI
-3. Todoサンプル
-4. Supabaseテーブル / RLS
-5. PWA名・アイコン
-6. 環境変数・URL
-7. Vercelプロジェクト
+Todoを使わない場合は、まず次を削除します。
 
-Todoを使わないアプリなら、`/dashboard`、Todo用Server Action、`public.todos` を削除して構いません。認証自体が不要ならAuth機能も削除可能です。
+```text
+app/(sample)/dashboard/
+features/todos/
+supabase/sample/todos.sql
+tests/sample.test.mjs
+```
 
-## 10. 品質チェック
+その後、自分の画面、業務処理、テーブル / RLS、テストを追加します。AuthやPWAも不要であれば個別に外せますが、Todoサンプルとは別の共通機能として扱います。
+
+## 11. 品質チェック
 
 変更の区切りごとに実行します。
 
@@ -208,9 +244,9 @@ flowchart LR
     E --> F["完了"]
 ```
 
-すべて成功した状態を開発開始点・完了条件にします。
+Todoサンプルを削除した場合でも、`tests/sample.test.mjs` を一緒に削除していれば共通基盤テストだけで `npm run check` を継続できます。
 
-## 11. PWA確認
+## 12. PWA確認
 
 Service WorkerはProductionでのみ登録します。
 
@@ -219,9 +255,9 @@ npm run build
 npm start
 ```
 
-ブラウザのApplication/Manifest/Service Workersで確認します。Auth / Dashboard / APIはオフラインキャッシュ対象外です。
+ブラウザのApplication / Manifest / Service Workersで確認します。Auth / Dashboard / APIはオフラインキャッシュ対象外です。
 
-## 12. ChatGPT / Codex
+## 13. ChatGPT / Codex
 
 ChatGPT / Codexでは、テンプレートから作成した対象アプリのリポジトリと、変更目的・変更範囲・完了条件を明示します。
 
@@ -230,13 +266,14 @@ ChatGPT / Codexでは、テンプレートから作成した対象アプリの�
 ```text
 このリポジトリは nextjs-supabase-vercel-webapp-template から作成しました。
 Todoサンプルは削除して、○○管理アプリを実装してください。
-既存のSupabase SSR、RLS方針、CIは維持してください。
+共通基盤のSupabase SSR、RLS方針、PWA、CIは維持してください。
+Todoサンプルを削除するときは app/(sample)/dashboard、features/todos、supabase/sample/todos.sql、tests/sample.test.mjs をまとめて扱ってください。
 完了条件は npm run check 成功です。
 ```
 
 GitHub Appに対象リポジトリのアクセス権が付与されている場合は、ChatGPTからブランチ作成・Commit・PR・CI確認・mergeまで進められます。
 
-## 13. Gitフロー
+## 14. Gitフロー
 
 ```mermaid
 flowchart LR
@@ -249,7 +286,7 @@ flowchart LR
     G --> X["merge"]
 ```
 
-## 14. CI成功報告ルール
+## 15. CI成功報告ルール
 
 CI成功報告時は必ず次を併記します。
 
