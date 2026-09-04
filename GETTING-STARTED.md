@@ -190,14 +190,15 @@ Redirect URL: http://localhost:3000/**
 
 ## 9. サンプル機能の確認
 
-Todoサンプルを残している場合は、次の流れを確認できます。
+Todoサンプルを残している場合は、次の流れを確認できます。共通AuthはTodoへ固定遷移せず、Login / Confirm後はいったん `/` へ戻ります。
 
 ```mermaid
 flowchart TD
     A["/auth/sign-up"] --> B["確認メール"]
     B --> C["/auth/confirm"]
     C --> D["/auth/login"]
-    D --> E["/dashboard"]
+    D --> H["/ 共通トップ"]
+    H --> E["/dashboard  Todoサンプル"]
     E --> F["Todo追加 / 更新 / 削除"]
 ```
 
@@ -206,8 +207,8 @@ npm run dev
 ```
 
 - `/auth/sign-up` アカウント作成
-- `/auth/login` ログイン
-- `/dashboard` Todo CRUD
+- `/auth/login` ログイン（成功後は `/`）
+- `/dashboard` Todo CRUD（トップページから任意に開くサンプル）
 - `/offline` PWAオフライン画面
 
 Supabase設定後は、別ユーザーを2人作成し、一方のTodoが他方から見えないことまで確認するとRLSの動作確認になります。
