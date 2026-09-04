@@ -2,24 +2,45 @@
 
 ## 基本ルール
 
-変更後は次を実行します。
+変更前後の環境確認にはdoctorを使います。
+
+```powershell
+npm run doctor
+```
+
+変更後の品質確認は次の1コマンドを基準にします。
 
 ```powershell
 npm run check
 ```
 
+`npm run check` は lint → typecheck → test → build を順に実行します。
+
 ## 開発フロー
 
 ```mermaid
 flowchart LR
-    A["Issue / 要求"] --> B["feature / fix branch"]
+    A["Issue / 要求"] --> D["npm run doctor"]
+    D --> B["feature / fix branch"]
     B --> C["実装"]
-    C --> D["npm run check"]
-    D --> E["Commit / Push"]
+    C --> Q["npm run check"]
+    Q --> E["Commit / Push"]
     E --> F["Pull Request"]
     F --> G["GitHub Actions CI"]
     G --> H["merge"]
 ```
+
+## Doctor
+
+`npm run doctor` は依存パッケージなしで実行できる環境診断です。
+
+確認項目:
+
+- Node.jsが22以上27未満か
+- `package.json` / `package-lock.json` / `.env.example` が存在するか
+- `.env.local` がある場合、主要Supabase環境変数がサンプル値のままではないか
+
+`.env.local` 未作成やSupabase未設定は警告に留めます。共通トップと `/api/health` はSupabase未設定でも確認できるためです。Node.js対象外や必須Repositoryファイル欠落はFAILとして終了コード1を返します。
 
 ## CI 完了報告
 
@@ -32,26 +53,31 @@ CI成功をもって作業完了と報告する場合、最低限以下を併記
 
 ```mermaid
 flowchart LR
-    P["Push / PR"] --> I["npm ci"]
-    I --> L["lint"]
-    L --> T["typecheck"]
-    T --> S["test"]
-    S --> B["build"]
+    P["Push / PR"] --> D["doctor"]
+    D --> I["npm ci"]
+    I --> Q["npm run check"]
+    Q --> L["lint / typecheck"]
+    L --> T["test"]
+    T --> B["build"]
     B --> OK["CI Success"]
 ```
 
+CIもローカルと同じ `npm run check` を品質ゲートの入口にします。
+
 ## テストの役割分離
 
-テンプレートでは、共通基盤と削除可能なTodoサンプルのテストを分けます。
+テンプレートでは、共通基盤、削除可能なTodoサンプル、テンプレート運用契約のテストを分けます。
 
 ```text
-tests/core.test.mjs      共通基盤テスト
-tests/sample.test.mjs    Todoサンプル専用テスト
+tests/core.test.mjs                共通基盤テスト
+tests/sample.test.mjs              Todoサンプル専用テスト
+tests/doctor.test.mjs              doctor単体テスト
+tests/template-lifecycle.test.mjs  開発・運用・拡張契約テスト
 ```
 
-Todoサンプルを削除する場合は `tests/sample.test.mjs` も一緒に削除します。`tests/core.test.mjs` はTodo固有ファイルやTodo SQLの存在に依存しないため、独自アプリでも原則として残します。
+Todoサンプルを削除する場合は `tests/sample.test.mjs` も一緒に削除します。`tests/core.test.mjs`、doctor、lifecycleテストはTodo固有ファイルの存在に依存しないため、独自アプリでも原則として残します。
 
-新しい業務機能を追加した場合は、その機能のテストを別ファイルとして追加してください。
+新しい業務機能を追加した場合は、その機能のテストを別ファイルとして追加してください。拡張方針は [EXTENDING.md](EXTENDING.md) を参照してください。
 
 ## Database変更
 
@@ -88,7 +114,11 @@ flowchart LR
 
 このテンプレートは現在 ESLint 9系を固定しています。ESLint 9自体はEOLですが、Next.js 16系の `eslint-config-next` は現時点でESLint 10の正式対応が完了しておらず、Next.js側の対応PRも未マージです。
 
-そのため、互換性を無視してESLint 10へ強制更新せず、Dependabotでは `eslint` のmajor updateを一時的にignoreします。Next.jsのstable版で正式対応が確認できた時点でignoreを削除し、`npm ci` / lint / typecheck / test / build をすべて通してからESLint 10へ移行します。
+そのため、互換性を無視してESLint 10へ強制更新せず、Dependabotでは `eslint` のmajor updateを一時的にignoreします。Next.jsのstable版で正式対応が確認できた時点でignoreを削除し、`npm ci` / lint / typecheck / test / build をすべて通してからESLint 10へ移行します。追跡はIssue #6で行います。
+
+## 運用への引き渡し
+
+mergeしてVercelへ反映した後の確認、障害切り分け、環境変数変更、ロールバックは [OPERATIONS.md](OPERATIONS.md) を基準にします。
 
 ## 公開テンプレートのRepository設定
 
@@ -111,6 +141,8 @@ Repository設定はソースコードとは別管理のため、変更時はGitH
 - `docs/<name>`: ドキュメントのみ
 - `chore/<name>`: 保守・設定変更
 
+Issue運用でIssue番号をブランチ名に含める場合は `feature/123-name` や `fix/123-name` のようにします。
+
 ## Commit
 
 変更理由が分かる日本語またはConventional Commits形式を推奨します。
@@ -127,4 +159,4 @@ PRには目的、変更内容、確認方法、影響範囲、未対応事項を
 
 ## README 更新
 
-セットアップ、環境変数、開発コマンド、デプロイ、構成、CIルールが変わった場合はREADME / docsも同じ変更で更新します。
+セットアップ、環境変数、開発コマンド、デプロイ、運用、拡張契約、CIルールが変わった場合はREADME / docsも同じ変更で更新します。
