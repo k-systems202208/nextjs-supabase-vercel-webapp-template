@@ -33,7 +33,8 @@ flowchart TD
     A --> B["確認メール"]
     B --> D["/auth/confirm"]
     D --> E["Login"]
-    E --> S["削除可能なTodoサンプル"]
+    E --> H["/ 共通トップ"]
+    H --> S["必要ならTodoサンプル"]
     S --> F["/dashboard"]
     F --> G["Create / Update / Delete Todo"]
 ```
@@ -48,10 +49,12 @@ sequenceDiagram
     U->>A: Loginフォーム送信
     A->>S: signInWithPassword
     S-->>A: Session / Cookie
-    A-->>U: /dashboard へ遷移
+    A-->>U: / へ遷移
 ```
 
-`/dashboard` は現在のTodoサンプルの遷移先です。独自アプリでTodoサンプルを削除した場合は、Login / Confirm後の遷移先も自分のアプリに合わせて変更してください。
+共通Auth基盤はTodoサンプルへ依存しないため、Login / Confirm後の既定遷移先は `/` です。Todoサンプルを試す場合は、トップページから `/dashboard` を開きます。
+
+独自アプリでは、必要に応じて認証後の遷移先を自分の画面へ変更してください。
 
 ## Supabase Database
 
@@ -111,7 +114,7 @@ sequenceDiagram
     M->>A: token_hash または code
     A->>S: verifyOtp / exchangeCodeForSession
     S-->>A: 認証完了
-    A-->>U: アプリの認証後画面へ遷移
+    A-->>U: / へ遷移
 ```
 
 まずはSupabase標準の確認メールで動作確認できます。SSR向けに確認メールテンプレートをカスタマイズする場合は、Supabase公式ドキュメントのToken Hashを使う方式を利用できます。
