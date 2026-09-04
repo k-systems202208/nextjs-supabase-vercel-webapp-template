@@ -6,8 +6,9 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 const packageJson = JSON.parse(read("package.json"));
 const gitignore = read(".gitignore");
 const envExample = read(".env.example");
-const schema = read("supabase/schema.sql");
 const serviceWorker = read("public/sw.js");
+const authActions = read("app/auth/actions.ts");
+const authConfirm = read("app/auth/confirm/route.ts");
 const readme = read("README.md");
 const customizing = read("docs/CUSTOMIZING.md");
 const supabaseSetup = read("docs/SUPABASE-SETUP.md");
@@ -51,31 +52,26 @@ test("secrets are ignored and publishable env template exists", () => {
   assert.doesNotMatch(envExample, /service_role/i);
 });
 
-test("auth, CRUD and PWA scaffold files exist", () => {
+test("common auth and PWA scaffold files exist", () => {
   for (const path of [
     "app/auth/login/page.tsx",
     "app/auth/sign-up/page.tsx",
     "app/auth/confirm/route.ts",
-    "app/dashboard/page.tsx",
-    "app/dashboard/actions.ts",
     "app/manifest.ts",
     "public/sw.js",
     "public/icon-192.png",
     "public/icon-512.png",
-    "supabase/schema.sql",
   ]) {
     assert.equal(existsSync(new URL(`../${path}`, import.meta.url)), true, `${path} is missing`);
   }
 });
 
-test("sample todos table is protected by ownership RLS", () => {
-  assert.match(schema, /alter table public\.todos enable row level security/i);
-  assert.match(schema, /grant select, insert, update, delete on table public\.todos to authenticated/i);
-  assert.match(schema, /revoke all on table public\.todos from anon/i);
-  assert.match(schema, /for select[\s\S]*auth\.uid\(\)[\s\S]*user_id/i);
-  assert.match(schema, /for insert[\s\S]*with check[\s\S]*auth\.uid\(\)[\s\S]*user_id/i);
-  assert.match(schema, /for update[\s\S]*using[\s\S]*with check/i);
-  assert.match(schema, /for delete[\s\S]*auth\.uid\(\)[\s\S]*user_id/i);
+test("common auth default flow is not coupled to the optional Todo dashboard", () => {
+  assert.doesNotMatch(authActions, /redirect\("\/dashboard"\)/);
+  assert.doesNotMatch(authActions, /next=\/dashboard/);
+  assert.doesNotMatch(authConfirm, /return "\/dashboard"/);
+  assert.match(authActions, /redirect\("\/"\)/);
+  assert.match(authConfirm, /return "\/"/);
 });
 
 test("service worker does not cache authenticated routes", () => {
@@ -84,21 +80,20 @@ test("service worker does not cache authenticated routes", () => {
   assert.match(serviceWorker, /pathname\.startsWith\("\/api"\)/);
 });
 
-test("template documents that Todo is replaceable sample code", () => {
+test("template documents the core and replaceable sample boundary", () => {
   assert.match(readme, /削除可能なサンプル/);
   assert.match(readme, /docs\/CUSTOMIZING\.md/);
-  assert.match(customizing, /自由に削除・置換/);
+  assert.match(customizing, /削除可能なサンプル/);
+  assert.match(customizing, /共通基盤とサンプルの境界/);
   assert.match(customizing, /このテンプレート本体へ追加しないもの/);
 });
 
-test("detailed Supabase setup guide is linked and covers required configuration", () => {
+test("detailed Supabase setup guide covers common configuration", () => {
   assert.match(readme, /docs\/SUPABASE-SETUP\.md/);
   assert.match(supabaseSetup, /Project URLとPublishable Key/);
-  assert.match(supabaseSetup, /supabase\/schema\.sql/);
   assert.match(supabaseSetup, /Authentication → URL Configuration/);
   assert.match(supabaseSetup, /Custom SMTP/);
   assert.match(supabaseSetup, /NEXT_PUBLIC_SITE_URL/);
-  assert.match(supabaseSetup, /別ユーザー/);
 });
 
 test("all primary documents include Mermaid diagrams", () => {

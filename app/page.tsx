@@ -5,7 +5,7 @@ const checks = [
   "Next.js 16 App Router / TypeScript",
   "Supabase SSR Cookie Auth",
   "ログイン / サインアップ",
-  "RLS付きサンプルTodo CRUD",
+  "削除可能なRLS付きTodo CRUDサンプル",
   "Installable PWA / Offline fallback",
   "GitHub Actions CI / Vercel ready",
 ];
@@ -19,13 +19,13 @@ export default function Home() {
         <p className="eyebrow">WEB APP STARTER</p>
         <h1>Next.js + Supabase + Vercel</h1>
         <p className="lead">
-          認証・CRUD・RLS・PWA・CIまで含め、Clone後すぐに実案件の土台として使える共通テンプレートです。
+          認証・RLS・PWA・CIなどの共通基盤と、削除可能なTodo CRUDサンプルを分離したWebアプリテンプレートです。
         </p>
 
         <div className={`status ${configured ? "ok" : "warn"}`}>
           <strong>Supabase:</strong>{" "}
           {configured
-            ? "環境変数が設定されています。認証サンプルを試せます。"
+            ? "環境変数が設定されています。認証とTodoサンプルを試せます。"
             : ".env.local を作成して接続情報を設定してください。"}
         </div>
 
@@ -51,7 +51,7 @@ export default function Home() {
         <ol>
           <li><code>.env.example</code> を <code>.env.local</code> にコピー</li>
           <li>Supabase Project URL / Publishable Key を設定</li>
-          <li><code>supabase/schema.sql</code> を SQL Editor で実行</li>
+          <li>Todoサンプルを試す場合だけ <code>supabase/sample/todos.sql</code> を SQL Editor で実行</li>
           <li>Supabase Auth の Site URL / Redirect URLs を設定</li>
           <li><code>npm run check</code> で一括検証</li>
         </ol>

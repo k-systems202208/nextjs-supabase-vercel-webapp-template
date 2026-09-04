@@ -34,7 +34,7 @@ export async function addTodo(formData: FormData) {
   const { error } = await supabase.from("todos").insert({ title });
 
   if (error) {
-    redirect(dashboardError("Todoを追加できませんでした。Supabaseのschema/RLSを確認してください。"));
+    redirect(dashboardError("Todoを追加できませんでした。Supabaseのsample SQL / RLSを確認してください。"));
   }
 
   revalidatePath("/dashboard");

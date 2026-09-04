@@ -4,13 +4,24 @@
 
 このテンプレートには、Supabase Auth のメール/パスワード認証と、ログインユーザー本人だけが操作できる Todo CRUD **サンプル**を含みます。
 
+共通基盤:
+
 - `/auth/login` ログイン
 - `/auth/sign-up` サインアップ
 - `/auth/confirm` メール確認コールバック
-- `/dashboard` 保護ページ + Todo CRUDサンプル
-- `supabase/schema.sql` todosテーブル + RLSサンプル
+- Supabase Browser / Server Client
+- Cookie Authセッション更新
+- RLSを最終認可境界とする方針
 
-`todos` はテンプレート利用者へCRUD/RLSの実装例を示すためのもので、アプリ固有の必須機能ではありません。独自アプリでは自由に削除・置換してください。置換手順は [CUSTOMIZING.md](CUSTOMIZING.md) を参照してください。
+削除可能なTodoサンプル:
+
+- `/dashboard` Todo CRUD画面
+- `app/(sample)/dashboard/`
+- `features/todos/`
+- `supabase/sample/todos.sql`
+- `tests/sample.test.mjs`
+
+`todos` はCRUD/RLSの実装例で、アプリ固有の必須機能ではありません。独自アプリでは自由に削除・置換してください。置換手順は [CUSTOMIZING.md](CUSTOMIZING.md) を参照してください。
 
 Supabase Projectをまだ作成していない場合や、Project URL / Publishable Key、SQL Editor、Auth URL、確認メール、Custom SMTP、Vercel環境変数まで順番に設定したい場合は、先に [SUPABASE-SETUP.md](SUPABASE-SETUP.md) を実施してください。
 
@@ -18,13 +29,14 @@ Supabase Projectをまだ作成していない場合や、Project URL / Publisha
 
 ```mermaid
 flowchart TD
-    A["Sign up"] --> B["確認メール"]
-    B --> C["/auth/confirm"]
-    C --> D["Login"]
-    D --> E["/dashboard"]
-    E --> F["Create Todo"]
-    E --> G["Update Todo"]
-    E --> H["Delete Todo"]
+    C["共通Auth基盤"] --> A["Sign up"]
+    A --> B["確認メール"]
+    B --> D["/auth/confirm"]
+    D --> E["Login"]
+    E --> H["/ 共通トップ"]
+    H --> S["必要ならTodoサンプル"]
+    S --> F["/dashboard"]
+    F --> G["Create / Update / Delete Todo"]
 ```
 
 ## 認証フロー
@@ -37,18 +49,26 @@ sequenceDiagram
     U->>A: Loginフォーム送信
     A->>S: signInWithPassword
     S-->>A: Session / Cookie
-    A-->>U: /dashboard へ遷移
+    A-->>U: / へ遷移
 ```
+
+共通Auth基盤はTodoサンプルへ依存しないため、Login / Confirm後の既定遷移先は `/` です。Todoサンプルを試す場合は、トップページから `/dashboard` を開きます。
+
+独自アプリでは、必要に応じて認証後の遷移先を自分の画面へ変更してください。
 
 ## Supabase Database
 
-Todoサンプルを利用する場合は、Supabase SQL Editor で `supabase/schema.sql` を実行します。
+Todoサンプルを利用する場合だけ、Supabase SQL Editor で次を実行します。
+
+```text
+supabase/sample/todos.sql
+```
 
 このSQLは `authenticated` に必要なCRUD権限を明示的に付与し、`anon` のアクセスを取り除いたうえでRLSを有効化します。各Policyは `auth.uid() = user_id` で所有者を検証します。
 
 独自アプリでは、実際のデータ所有関係・共有範囲・管理者権限に合わせてテーブルとPolicyを設計し直してください。
 
-SupabaseのData APIでテーブルを利用する場合、RLS PolicyだけでなくPostgres RoleへのGRANTも必要です。このサンプルでは必要な権限を `schema.sql` へ明示しています。
+SupabaseのData APIでテーブルを利用する場合、RLS PolicyだけでなくPostgres RoleへのGRANTも必要です。このサンプルでは必要な権限を `supabase/sample/todos.sql` へ明示しています。
 
 ### CRUDとRLSの関係
 
@@ -94,7 +114,7 @@ sequenceDiagram
     M->>A: token_hash または code
     A->>S: verifyOtp / exchangeCodeForSession
     S-->>A: 認証完了
-    A-->>U: /dashboard へ遷移
+    A-->>U: / へ遷移
 ```
 
 まずはSupabase標準の確認メールで動作確認できます。SSR向けに確認メールテンプレートをカスタマイズする場合は、Supabase公式ドキュメントのToken Hashを使う方式を利用できます。
@@ -103,6 +123,6 @@ sequenceDiagram
 
 ## セキュリティ
 
-アプリ側の認証チェックだけを信用せず、DBのRLSを最終的な認可境界として維持します。Server Actionでも `getClaims()` を使ってログイン状態を検証し、RLSでも所有者を検証します。
+アプリ側の認証チェックだけを信用せず、DBのRLSを最終的な認可境界として維持します。Server Actionでも `getClaims()` を使ってログイン状態を検証し、RLSでも所有者・共有条件を検証します。
 
 ブラウザ用環境変数にはProject URLとPublishable Keyを使用し、Secret Key / `service_role` / Database passwordを `NEXT_PUBLIC_` へ設定しないでください。

@@ -40,13 +40,28 @@ flowchart LR
     B --> OK["CI Success"]
 ```
 
+## テストの役割分離
+
+テンプレートでは、共通基盤と削除可能なTodoサンプルのテストを分けます。
+
+```text
+tests/core.test.mjs      共通基盤テスト
+tests/sample.test.mjs    Todoサンプル専用テスト
+```
+
+Todoサンプルを削除する場合は `tests/sample.test.mjs` も一緒に削除します。`tests/core.test.mjs` はTodo固有ファイルやTodo SQLの存在に依存しないため、独自アプリでも原則として残します。
+
+新しい業務機能を追加した場合は、その機能のテストを別ファイルとして追加してください。
+
 ## Database変更
 
-`supabase/schema.sql` は初期bootstrap用です。案件開始後にDB変更を継続管理する場合はSupabase CLIのmigrationへ移行します。migrationファイルはCLIで生成し、手作業で日時ファイル名を作らない運用にします。
+`supabase/sample/todos.sql` は**Todoサンプル専用**です。共通基盤そのものには固定の業務Schemaを持たせません。
+
+新しいアプリでは、自分のデータモデルとRLSを設計します。案件開始後にDB変更を継続管理する場合はSupabase CLIのmigrationへ移行します。migrationファイルはCLIで生成し、手作業で日時ファイル名を作らない運用にします。
 
 ```mermaid
 flowchart LR
-    A["初期構築"] --> B["supabase/schema.sql"]
+    A["Todo sample SQL"] --> B["独自Schema / RLS"]
     B --> C["案件開始後"]
     C --> D["Supabase CLI migration"]
 ```

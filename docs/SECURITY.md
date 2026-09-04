@@ -42,7 +42,9 @@ flowchart TD
 
 ## RLS
 
-Data APIからアクセスするテーブルではRLSを有効にします。`supabase/schema.sql` のTodoサンプルは、`authenticated` へ必要なGRANTだけを付与し、各操作で所有者条件を入れています。
+Data APIからアクセスするテーブルではRLSを有効にします。削除可能なTodoサンプル `supabase/sample/todos.sql` は、`authenticated` へ必要なGRANTだけを付与し、各操作で所有者条件を入れています。
+
+Todoサンプルを削除して独自Schemaへ置き換える場合も、この方針を維持します。
 
 `TO authenticated` だけでは所有者認可にはなりません。必ず `auth.uid()` 等で行単位の条件を設定します。
 

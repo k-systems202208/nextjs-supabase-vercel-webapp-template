@@ -41,7 +41,8 @@ export async function signIn(formData: FormData) {
     redirect(authErrorUrl("/auth/login", "メールアドレスまたはパスワードを確認してください。"));
   }
 
-  redirect("/dashboard");
+  // Auth is common infrastructure. Do not couple its default destination to the optional Todo sample.
+  redirect("/");
 }
 
 export async function signUp(formData: FormData) {
@@ -62,7 +63,7 @@ export async function signUp(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/confirm?next=/dashboard`,
+      emailRedirectTo: `${origin}/auth/confirm?next=/`,
     },
   });
 

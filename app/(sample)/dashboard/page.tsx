@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
+import { addTodo, deleteTodo, toggleTodo } from "@/features/todos/actions";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
-import { addTodo, deleteTodo, toggleTodo } from "./actions";
 
 type Todo = {
   id: string;
@@ -67,7 +67,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
         <section className="card">
           <h2>Database setup required</h2>
           <p>todos テーブルを取得できませんでした。</p>
-          <p><code>supabase/schema.sql</code> を Supabase SQL Editor で実行してください。</p>
+          <p><code>supabase/sample/todos.sql</code> を Supabase SQL Editor で実行してください。</p>
         </section>
       ) : (
         <>

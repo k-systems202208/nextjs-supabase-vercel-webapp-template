@@ -1,5 +1,6 @@
--- Bootstrap SQL for the sample Auth + CRUD feature.
--- Run this in Supabase SQL Editor for a template-derived project.
+-- Sample SQL for the optional Todo Auth + CRUD example.
+-- Run this in Supabase SQL Editor only when you want to try the Todo sample.
+-- New applications may delete this file and replace it with their own schema / RLS.
 
 create table if not exists public.todos (
   id uuid primary key default gen_random_uuid(),
