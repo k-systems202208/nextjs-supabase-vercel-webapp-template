@@ -22,10 +22,12 @@ test("optional Todo sample is kept inside the sample boundary", () => {
   assert.equal(existsSync(new URL("../supabase/schema.sql", import.meta.url)), false);
 });
 
-test("sample todos table is protected by ownership RLS", () => {
+test("sample todos table is protected by ownership RLS and least privilege", () => {
+  assert.match(schema, /create index if not exists todos_user_id_idx on public\.todos \(user_id\)/i);
   assert.match(schema, /alter table public\.todos enable row level security/i);
-  assert.match(schema, /grant select, insert, update, delete on table public\.todos to authenticated/i);
   assert.match(schema, /revoke all on table public\.todos from anon/i);
+  assert.match(schema, /revoke all on table public\.todos from authenticated/i);
+  assert.match(schema, /grant select, insert, update, delete on table public\.todos to authenticated/i);
   assert.match(schema, /for select[\s\S]*auth\.uid\(\)[\s\S]*user_id/i);
   assert.match(schema, /for insert[\s\S]*with check[\s\S]*auth\.uid\(\)[\s\S]*user_id/i);
   assert.match(schema, /for update[\s\S]*using[\s\S]*with check/i);

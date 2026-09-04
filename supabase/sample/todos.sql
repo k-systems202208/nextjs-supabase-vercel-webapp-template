@@ -10,11 +10,15 @@ create table if not exists public.todos (
   created_at timestamptz not null default now()
 );
 
+-- Ownership checks and user-scoped reads use this column on every request.
+create index if not exists todos_user_id_idx on public.todos (user_id);
+
 alter table public.todos enable row level security;
 
--- New Supabase projects no longer expose every new table to the Data API automatically.
--- Explicitly grant only the authenticated role the CRUD privileges used by this sample.
+-- Supabase projects can have default table privileges beyond CRUD.
+-- Reset both browser-facing roles first, then grant only what this sample needs.
 revoke all on table public.todos from anon;
+revoke all on table public.todos from authenticated;
 grant select, insert, update, delete on table public.todos to authenticated;
 
 drop policy if exists "todos_select_own" on public.todos;

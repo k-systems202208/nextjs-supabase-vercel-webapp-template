@@ -4,6 +4,8 @@
 
 目的はTodoサンプル自体を守ることではありません。**Todoサンプルを削除しても共通基盤だけで `npm run check` が成功し、その後に独自featureを追加できること**を確認します。
 
+実際の第三者利用テストで見つかったSupabase / Vercel / GitHub上の注意点は [THIRD-PARTY-VALIDATION.md](THIRD-PARTY-VALIDATION.md) にまとめています。
+
 ## 自動CIで確認していること
 
 通常の `quality` jobでは、まずテンプレートをそのまま品質チェックします。
@@ -41,14 +43,18 @@ GitHubで **Use this template** を選択し、テスト用の新しいRepositor
 
 テンプレート本体を直接改造するテストではありません。
 
+**Use this templateではRulesetは引き継がれません。** また、ChatGPTのGitHub連携をRepository限定にしている場合は、新Repositoryを連携対象へ追加します。
+
 ### 2. GitHub推奨設定を適用する
 
-GitHub CLIを利用できるWindows環境では、新しいRepositoryをCloneした後に実行します。
+GitHub CLIを利用できるWindows環境では、新しいRepositoryをCloneした後、そのRepository自身のスクリプトを実行します。
 
 ```powershell
 gh auth login
-.\scripts\setup-github.ps1
+.\scripts\setup-github.ps1 -Repository owner/new-repository
 ```
+
+別テンプレートのCloneフォルダから実行しないでください。Ruleset JSONは**実行中Repositoryの `github/protect-main.ruleset.json`** を使用します。
 
 確認事項:
 
@@ -111,6 +117,10 @@ Todoをコピーすることを目的にせず、例えば `/equipment` のよ�
 - feature固有コードを共通coreへ混ぜていない
 - SecretをClient Componentへ渡していない
 - Databaseを使う場合はRLSを設計している
+- `authenticated` は一度 `revoke all` して必要な権限だけgrantする
+- `user_id` など所有者検索に使うFK列へindexを付ける
+- 2ユーザーで所有者RLSを実際に確認する
+- Security / Performance Advisorを確認する
 - feature固有テストを追加した
 - `npm run check` が成功する
 
@@ -128,19 +138,48 @@ Pull Request
 quality CI
   ↓
 Squash Merge
+  ↓
+main CI
 ```
 
 Git操作に不安がある場合は [../BEGINNER-GUIDE.md](../BEGINNER-GUIDE.md) のREADME 1行変更チュートリアルを先に実施してください。
 
+### 7. Supabase / Vercelの実サービスまで確認する
+
+Supabaseを使う独自featureなら、テスト用ProjectへMigrationを実際に適用します。
+
+Vercel Production URLが確定したら、Vercelへ次を設定します。
+
+```text
+NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
+```
+
+Supabase **Authentication → URL Configuration** では、Site URLをProduction URLへ設定し、ProductionのRedirect URLは必要な `/auth/confirm` へ限定します。
+
+Production Deploy後は少なくとも次を確認します。
+
+```text
+/
+/api/health
+/auth/sign-up
+/auth/login
+独自featureの認証必須Route
+```
+
 ## 合格条件
 
 - Use this templateから新しいRepositoryを作成できる
+- 新Repositoryへ `Protect main` を適用できる
 - `npm run doctor` に致命的エラーがない
 - 初期状態で `npm run check` 成功
 - Todoサンプル削除後も `npm run check` 成功
 - 独自feature追加後も `npm run check` 成功
 - Pull Requestの `quality` CI成功
 - Squash Mergeできる
+- merge後main CI成功
+- Supabase実DBでRLS / 最小権限 / indexを確認できる
+- Vercel Production Deployが成功する
+- `/api/health`、Auth、独自featureをProduction URLで確認できる
 
 ## 失敗した場合
 

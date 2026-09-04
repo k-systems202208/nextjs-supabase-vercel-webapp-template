@@ -13,6 +13,7 @@ const githubSetup = read("docs/GITHUB-SETUP.md");
 const operations = read("docs/OPERATIONS.md");
 const extending = read("docs/EXTENDING.md");
 const smokeTest = read("docs/TEMPLATE-SMOKE-TEST.md");
+const thirdPartyValidation = read("docs/THIRD-PARTY-VALIDATION.md");
 
 test("developer doctor is part of the template contract", () => {
   assert.equal(existsSync(new URL("../scripts/doctor.mjs", import.meta.url)), true);
@@ -64,6 +65,17 @@ test("sampleless smoke test protects the reusable common core", () => {
   assert.match(smokeTest, /Use this template/);
   assert.match(smokeTest, /npm run check/);
   assert.match(smokeTest, /Pull Request/);
+  assert.match(smokeTest, /THIRD-PARTY-VALIDATION\.md/);
+});
+
+test("third-party validation records real service checks", () => {
+  assert.equal(existsSync(new URL("../docs/THIRD-PARTY-VALIDATION.md", import.meta.url)), true);
+  assert.match(thirdPartyValidation, /Use this template/);
+  assert.match(thirdPartyValidation, /revoke all on table public\.example from authenticated/);
+  assert.match(thirdPartyValidation, /Performance Advisor/);
+  assert.match(thirdPartyValidation, /NEXT_PUBLIC_SITE_URL/);
+  assert.match(thirdPartyValidation, /\/auth\/confirm/);
+  assert.match(thirdPartyValidation, /Vercel Production/);
 });
 
 test("README, Getting Started and Development link beginner guidance", () => {

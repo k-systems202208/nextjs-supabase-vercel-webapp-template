@@ -63,7 +63,8 @@ export async function signUp(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/confirm?next=/`,
+      // Keep the production allow-list exact and let /auth/confirm default to "/".
+      emailRedirectTo: `${origin}/auth/confirm`,
     },
   });
 

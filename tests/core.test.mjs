@@ -49,6 +49,7 @@ test("secrets are ignored and publishable env template exists", () => {
   assert.match(gitignore, /\*\.key/);
   assert.match(envExample, /NEXT_PUBLIC_SUPABASE_URL/);
   assert.match(envExample, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
+  assert.match(envExample, /NEXT_PUBLIC_SITE_URL/);
   assert.doesNotMatch(envExample, /service_role/i);
 });
 
@@ -72,6 +73,11 @@ test("common auth default flow is not coupled to the optional Todo dashboard", (
   assert.doesNotMatch(authConfirm, /return "\/dashboard"/);
   assert.match(authActions, /redirect\("\/"\)/);
   assert.match(authConfirm, /return "\/"/);
+});
+
+test("signup uses an exact production confirmation path", () => {
+  assert.match(authActions, /emailRedirectTo: `\$\{origin\}\/auth\/confirm`/);
+  assert.doesNotMatch(authActions, /emailRedirectTo:[^\n]*\?next=/);
 });
 
 test("service worker does not cache authenticated routes", () => {
