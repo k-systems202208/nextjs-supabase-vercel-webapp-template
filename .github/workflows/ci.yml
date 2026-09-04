@@ -61,3 +61,15 @@ jobs:
 
       - name: Quality gate
         run: npm run check
+
+      - name: Sampleless template smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf -- \
+            "app/(sample)/dashboard" \
+            "features/todos" \
+            "supabase/sample/todos.sql" \
+            "tests/sample.test.mjs" \
+            ".next"
+          npm run check
