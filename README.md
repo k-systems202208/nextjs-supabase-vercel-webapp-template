@@ -10,13 +10,13 @@ Next.js App Router、Supabase、Vercel を使ったWebアプリ開発をすぐ�
 
 ```mermaid
 flowchart LR
-    A["Use this template / Clone"] --> B["npm ci"]
-    B --> C["doctor / Supabase設定"]
-    C --> D["共通基盤を確認"]
-    D --> E["Todoサンプルを確認"]
+    A["Use this template / Clone"] --> B["GitHub推奨設定"]
+    B --> C["npm ci / doctor"]
+    C --> D["Supabase設定 / 共通基盤確認"]
+    D --> E["Todoサンプル確認"]
     E --> F["独自featureへ作り替え"]
     F --> G["npm run check"]
-    G --> H["GitHub Actions CI"]
+    G --> H["Pull Request / CI"]
     H --> I["Vercelデプロイ / 運用"]
 ```
 
@@ -36,6 +36,7 @@ flowchart LR
 - `npm run doctor` による環境診断
 - lint / typecheck / test / build
 - GitHub Actions CI
+- GitHub推奨設定スクリプト / Protect main Ruleset
 - Dependabot
 - Vercelデプロイ・運用Runbook
 - feature拡張の共通契約
@@ -57,17 +58,11 @@ Todoを使わない新規アプリでは、上記のサンプル一式を削除�
 flowchart TD
     T["Web App Template"] --> K["共通基盤"]
     T --> S["削除可能なTodoサンプル"]
-
     K --> K1["Next.js / Supabase接続"]
-    K --> K2["Auth / RLS方針"]
-    K --> K3["PWA"]
-    K --> K4["Doctor / Quality / CI"]
-    K --> K5["Operations / Extension contract"]
-
-    S --> S1["app/(sample)/dashboard"]
-    S --> S2["features/todos"]
-    S --> S3["supabase/sample/todos.sql"]
-    S --> S4["tests/sample.test.mjs"]
+    K --> K2["Auth / RLS / PWA"]
+    K --> K3["Doctor / Quality / CI"]
+    K --> K4["GitHub protection / Operations"]
+    S --> S1["dashboard / todos / sample SQL / sample test"]
 ```
 
 具体的な作り替え手順は [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) を参照してください。
@@ -83,44 +78,27 @@ flowchart TD
 - GitHub Actions CI
 - Node.js 22
 
-## 含まれるもの
-
-- Supabase Browser / Server Client
-- `proxy.ts` によるCookie Authセッション更新
-- メール/パスワード Login / Signup / Confirm / Signout
-- 分離済みTodo CRUDサンプル
-- `auth.uid() = user_id` のRLSサンプル
-- Data API向け明示GRANTサンプル
-- PWA Manifest / Service Worker / Offline fallback
-- `/api/health`
-- `npm run doctor`
-- lint / typecheck / test / build
-- GitHub Actions CI
-- Dependabotによる依存関係の月次確認
-- Vercelデプロイ・運用手順
-- 独自featureの拡張ガイド
-- GitHub Desktop / ChatGPT / Codex 開発手順
-- Git初心者向けの使い方説明書
-
 ## クイックスタート
 
 Git / GitHubの操作に不安がある場合は、先に [BEGINNER-GUIDE.md](BEGINNER-GUIDE.md) の練習を1回行ってください。
 
-新しいアプリを作る場合はGitHubの **Use this template** から自分用リポジトリを作成し、そのリポジトリをCloneする方法を推奨します。
+新しいアプリを作る場合はGitHubの **Use this template** から自分用Repositoryを作成し、そのRepositoryをCloneします。
 
-テンプレート自体を直接確認する場合:
+Clone後、GitHub CLIを利用できるWindows環境では次を実行すると、Pull Request必須・`quality` CI必須・Squash Merge onlyなどの推奨設定を適用できます。
 
-```bash
-git clone https://github.com/k-systems202208/nextjs-supabase-vercel-webapp-template.git
-cd nextjs-supabase-vercel-webapp-template
-npm ci
+```powershell
+gh auth login
+.\scripts\setup-github.ps1
 ```
 
-Windows PowerShell:
+詳細は [docs/GITHUB-SETUP.md](docs/GITHUB-SETUP.md) を参照してください。
+
+開発環境:
 
 ```powershell
 Copy-Item .env.example .env.local
 npm run doctor
+npm ci
 npm run check
 npm run dev
 ```
@@ -133,13 +111,9 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
 # NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
 ```
 
-`npm run doctor` はNode.jsの対象Version、lockfile、env template、`.env.local` の主要設定を診断します。`.env.local` が未作成、またはSupabase値がサンプルのままの場合は警告しますが、共通トップとhealth確認だけを行う段階では致命的エラーにしません。
-
 Supabase Projectの作成、Project URL / Publishable Keyの取得、Auth URL、確認メール、Database / RLS、Vercel本番設定までの詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) を参照してください。
 
-Todo CRUDサンプルを試す場合だけ、`supabase/sample/todos.sql` をSupabase SQL Editorで実行します。
-
-Supabase未設定でもトップページと `/api/health` は起動できます。認証・Todo CRUDはSupabase設定後に利用します。
+Todo CRUDサンプルを試す場合だけ `supabase/sample/todos.sql` をSupabase SQL Editorで実行します。Supabase未設定でもトップページと `/api/health` は起動できます。
 
 ## サンプルURL
 
@@ -161,7 +135,28 @@ Supabase未設定でもトップページと `/api/health` は起動できます
 | `npm run build` | 本番ビルド |
 | `npm run check` | lint → typecheck → test → build |
 
-Todoサンプルを削除する場合は `tests/sample.test.mjs` も同時に削除します。`tests/core.test.mjs` と共通ライフサイクルのテストは残します。
+## GitHub運用
+
+`github/protect-main.ruleset.json` と `scripts/setup-github.ps1` により、新しいRepositoryでも次の運用を再現できます。
+
+```mermaid
+flowchart LR
+    I["日本語Issue"] --> B["Issue番号入りBranch"]
+    B --> W["Work / npm run check"]
+    W --> P["Pull Request"]
+    P --> Q["quality Required"]
+    Q --> R["Conversation resolved"]
+    R --> M["Squash Merge"]
+```
+
+- main削除禁止
+- Force push禁止
+- Linear history必須
+- Pull Request必須
+- Conversation resolution必須
+- `quality` Required Status Check
+- Squash Mergeのみ
+- Merge後のhead branch自動削除
 
 ## ドキュメント - 目的から選ぶ
 
@@ -172,6 +167,7 @@ flowchart TD
     Q{"何をしたい?"}
     Q -->|"Gitも初めて"| B["BEGINNER-GUIDE"]
     Q -->|"まず起動したい"| G["GETTING-STARTED"]
+    Q -->|"GitHubを安全に設定したい"| H["GITHUB-SETUP"]
     Q -->|"自分のアプリに変えたい"| C["CUSTOMIZING / EXTENDING"]
     Q -->|"技術を理解したい"| A["ARCHITECTURE / SUPABASE / AUTH / PWA / SECURITY"]
     Q -->|"公開・運用したい"| O["DEPLOYMENT / OPERATIONS"]
@@ -181,6 +177,7 @@ flowchart TD
 
 - [BEGINNER-GUIDE.md](BEGINNER-GUIDE.md) - Git / GitHub / GitHub Desktopをゼロから説明し、最初のPRを練習
 - [GETTING-STARTED.md](GETTING-STARTED.md) - Clone後のセットアップ、初回起動、Supabase設定への導線
+- [docs/GITHUB-SETUP.md](docs/GITHUB-SETUP.md) - Ruleset / Required Check / Merge設定を自動適用
 
 ### 自分のアプリへ変える
 
@@ -189,53 +186,35 @@ flowchart TD
 
 ### 技術を理解する
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - 構成と設計方針
-- [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) - Supabase Project作成、Auth、Database、RLS、Vercel設定
-- [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md) - Auth / CRUD / RLS
-- [docs/PWA.md](docs/PWA.md) - PWAとキャッシュ方針
-- [docs/SECURITY.md](docs/SECURITY.md) - セキュリティ方針
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md)
+- [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md)
+- [docs/PWA.md](docs/PWA.md)
+- [docs/SECURITY.md](docs/SECURITY.md)
 
-### 開発する
+### 開発・公開・運用する
 
-- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - 日常のIssue / Branch / Git / CI / 依存関係更新
-
-### 公開・運用する
-
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Vercelデプロイ
-- [docs/OPERATIONS.md](docs/OPERATIONS.md) - デプロイ後の確認・障害切り分け・ロールバック
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- [docs/OPERATIONS.md](docs/OPERATIONS.md)
 
 ## CI
 
-`main` へのPushおよびPull Requestで `npm run doctor` → `npm ci` → `npm run check` を実行します。`npm run check` の中で lint → typecheck → test → build を順に実行するため、ローカルとCIの品質ゲートを同じ入口に揃えています。
-
-```mermaid
-flowchart LR
-    P["Push / Pull Request"] --> D["doctor"]
-    D --> I["npm ci"]
-    I --> C["npm run check"]
-    C --> L["lint / typecheck"]
-    L --> T["core / sample / lifecycle tests"]
-    T --> B["build"]
-    B --> OK["CI Success"]
-```
-
-共通基盤テストとサンプルテストを分離しているため、新規アプリでTodoサンプルを外すときはサンプルテストだけを一緒に外せます。
+`main` へのPushおよびPull Requestで、GitHub設定スクリプトのBOM / PowerShell構文を確認した後、`npm run doctor` → `npm ci` → `npm run check` を実行します。`quality` がmainのRequired Status Checkです。
 
 ## 依存関係の保守
 
 Dependabotで npm と GitHub Actions を月1回確認します。minor / patch はグループ化し、major update は個別に互換性を確認してから取り込みます。
 
-ESLint 10は、Next.js 16系の `eslint-config-next` が正式対応するまで強制更新しません。現時点ではESLint 9系を固定し、上流対応後にCIで互換性を確認したうえで移行します。詳細は [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) を参照してください。
+ESLint 10はNext.js 16系の `eslint-config-next` が正式対応するまで強制更新しません。詳細は [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) を参照してください。
 
 ## セキュリティ
 
-ブラウザで使用するのはPublishable Keyのみです。Secret Key / `service_role` / DB passwordを `NEXT_PUBLIC_` へ設定したりGitHubへコミットしたりしないでください。
-
-認可はアプリ側チェックだけで完結させず、RLSを最終防御層として維持します。PWAもAuth / Dashboard / APIレスポンスをキャッシュしません。
+ブラウザで使用するのはPublishable Keyのみです。Secret Key / `service_role` / DB passwordを `NEXT_PUBLIC_` へ設定したりGitHubへコミットしたりしないでください。認可はRLSを最終防御層として維持します。
 
 ## テンプレートとしての運用
 
-このリポジトリ自体には案件固有仕様を積み上げません。Todoサンプルは実装例として維持し、特定業務向けの機能追加は、このテンプレートから作成した各アプリ側で行います。運用時は [docs/OPERATIONS.md](docs/OPERATIONS.md)、新しいfeature追加時は [docs/EXTENDING.md](docs/EXTENDING.md) を基準にします。
+このリポジトリ自体には案件固有仕様を積み上げません。Todoサンプルは実装例として維持し、特定業務向けの機能追加は、このテンプレートから作成した各アプリ側で行います。
 
 ## License
 

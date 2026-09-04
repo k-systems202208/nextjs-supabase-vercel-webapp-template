@@ -9,6 +9,7 @@ const readme = read("README.md");
 const gettingStarted = read("GETTING-STARTED.md");
 const development = read("docs/DEVELOPMENT.md");
 const beginnerGuide = read("BEGINNER-GUIDE.md");
+const githubSetup = read("docs/GITHUB-SETUP.md");
 const operations = read("docs/OPERATIONS.md");
 const extending = read("docs/EXTENDING.md");
 
@@ -43,6 +44,14 @@ test("beginner guide explains the full GitHub Desktop workflow", () => {
   assert.match(beginnerGuide, /Squash Merge/);
   assert.match(beginnerGuide, /Conflict/);
   assert.match(beginnerGuide, /ChatGPT \/ Codex/);
+});
+
+test("GitHub setup guidance is part of the template documentation", () => {
+  assert.equal(existsSync(new URL("../docs/GITHUB-SETUP.md", import.meta.url)), true);
+  assert.match(readme, /docs\/GITHUB-SETUP\.md/);
+  assert.match(githubSetup, /setup-github\.ps1/);
+  assert.match(githubSetup, /quality/);
+  assert.match(githubSetup, /Squash Merge/);
 });
 
 test("README, Getting Started and Development link beginner guidance", () => {
