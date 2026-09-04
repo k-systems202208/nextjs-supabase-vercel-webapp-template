@@ -2,65 +2,69 @@
 
 Next.js App Router、Supabase、Vercel を使ったWebアプリ開発をすぐに始めるための**共通テンプレート**です。
 
-認証、所有者RLS付きCRUD、PWA、CIまでを初期実装し、新規案件ごとの定型セットアップを減らします。第三者がこのリポジトリをCloneし、サンプル機能を削除・置換して、用途を問わず自分のWebアプリを作ることを前提にしています。
+認証、RLSを前提としたSupabase接続、PWA、品質チェック、CIまでを共通基盤として初期実装し、Todo CRUDは仕組みを確認するための**削除可能なサンプル**として分離しています。第三者がこのリポジトリから新しいアプリを作り、サンプルだけを削除・置換して利用することを前提にしています。
 
 ## このテンプレートの全体像
 
 ```mermaid
 flowchart LR
-    A["Clone / Use this template"] --> B["npm ci"]
+    A["Use this template / Clone"] --> B["npm ci"]
     B --> C["Supabase設定"]
-    C --> D["認証・RLS付きサンプル確認"]
-    D --> E["独自アプリへ作り替え"]
-    E --> F["GitHub Actions CI"]
-    F --> G["Vercelデプロイ"]
+    C --> D["共通基盤を確認"]
+    D --> E["Todoサンプルを確認"]
+    E --> F["独自アプリへ作り替え"]
+    F --> G["npm run check"]
+    G --> H["GitHub Actions CI"]
+    H --> I["Vercelデプロイ"]
 ```
 
 ## このテンプレートの考え方
 
 このリポジトリは完成済みTodoアプリではありません。
 
-`todos` / `/dashboard` は、Supabase Auth・CRUD・RLSの実装方法を確認するための**削除可能なサンプル**です。新しいアプリを作る際は、必要に応じて自由に削除・置換してください。
-
-テンプレートとして残すもの:
+### 原則として残す共通基盤
 
 - Next.js App Router の基本構成
 - Supabase Browser / Server Client
 - Authセッション更新の仕組み
 - RLSを前提としたセキュリティ設計
+- Login / Sign up / Confirm の認証実装例
 - PWAの基本構成
+- `/api/health`
 - lint / typecheck / test / build
 - GitHub Actions CI
+- Dependabot
 - Vercelデプロイ手順
 
-案件ごとに置き換えるもの:
+### 削除・置換できるTodoサンプル
 
-- アプリ名・説明
-- トップページや画面UI
-- `todos` サンプルCRUD
-- `supabase/schema.sql` の業務テーブル
-- RLS Policy
-- PWA名・説明・アイコン
-- ドメイン・環境変数
+Todoサンプルは、共通基盤から分離して次の場所へまとめています。
 
-### 残すもの / 置き換えるもの
+```text
+app/(sample)/dashboard/       Todoサンプル画面（URLは /dashboard）
+features/todos/               Todo用Server Action
+supabase/sample/todos.sql     Todoテーブル / GRANT / RLS
+ tests/sample.test.mjs         Todoサンプル専用テスト
+```
+
+> 上記の先頭空白は表示上のものです。実際のパスは `tests/sample.test.mjs` です。
+
+Todoを使わない新規アプリでは、上記のサンプル一式を削除し、自分の画面・業務処理・Database/RLS・テストへ置き換えます。共通テスト `tests/core.test.mjs` はTodoサンプルの存在に依存しません。
 
 ```mermaid
 flowchart TD
-    T["共通テンプレート"] --> K["原則として残す"]
-    T --> R["案件ごとに置き換える"]
+    T["Web App Template"] --> K["共通基盤"]
+    T --> S["削除可能なTodoサンプル"]
 
-    K --> K1["Next.js App Router"]
-    K --> K2["Supabase接続・Auth基盤"]
-    K --> K3["RLS前提の安全設計"]
-    K --> K4["PWA基本構成"]
-    K --> K5["CI / 品質チェック"]
+    K --> K1["Next.js / Supabase接続"]
+    K --> K2["Auth / RLS方針"]
+    K --> K3["PWA"]
+    K --> K4["Quality / CI"]
 
-    R --> R1["画面・UI"]
-    R --> R2["Todoサンプル"]
-    R --> R3["業務テーブル / RLS"]
-    R --> R4["アプリ名 / PWA情報"]
-    R --> R5["ドメイン / 環境変数"]
+    S --> S1["app/(sample)/dashboard"]
+    S --> S2["features/todos"]
+    S --> S3["supabase/sample/todos.sql"]
+    S --> S4["tests/sample.test.mjs"]
 ```
 
 具体的な作り替え手順は [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) を参照してください。
@@ -72,7 +76,7 @@ flowchart TD
 - TypeScript 5.9.3
 - Supabase (`@supabase/ssr` / `@supabase/supabase-js`)
 - Vercel
-- ESLint
+- ESLint 9系
 - GitHub Actions CI
 - Node.js 22
 
@@ -81,9 +85,9 @@ flowchart TD
 - Supabase Browser / Server Client
 - `proxy.ts` によるCookie Authセッション更新
 - メール/パスワード Login / Signup / Confirm / Signout
-- `todos` サンプルCRUD
-- `auth.uid() = user_id` のRLS Policy
-- Data API向け明示GRANT
+- 分離済みTodo CRUDサンプル
+- `auth.uid() = user_id` のRLSサンプル
+- Data API向け明示GRANTサンプル
 - PWA Manifest / Service Worker / Offline fallback
 - `/api/health`
 - lint / typecheck / test / build
@@ -93,6 +97,10 @@ flowchart TD
 - GitHub Desktop / ChatGPT / Codex 開発手順
 
 ## クイックスタート
+
+新しいアプリを作る場合はGitHubの **Use this template** から自分用リポジトリを作成し、そのリポジトリをCloneする方法を推奨します。
+
+テンプレート自体を直接確認する場合:
 
 ```bash
 git clone https://github.com/k-systems202208/nextjs-supabase-vercel-webapp-template.git
@@ -104,6 +112,7 @@ Windows PowerShell:
 
 ```powershell
 Copy-Item .env.example .env.local
+npm run check
 npm run dev
 ```
 
@@ -115,17 +124,17 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
 # NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
 ```
 
-Supabase Projectの作成、Project URL / Publishable Keyの取得、Database / RLS、Auth URL、確認メール、Vercel本番設定までの詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) を参照してください。
+Supabase Projectの作成、Project URL / Publishable Keyの取得、Auth URL、確認メール、Database / RLS、Vercel本番設定までの詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) を参照してください。
 
-サンプルCRUDを動かす場合は `supabase/schema.sql` を Supabase SQL Editor で実行します。
+Todo CRUDサンプルを試す場合だけ、`supabase/sample/todos.sql` をSupabase SQL Editorで実行します。
 
-Supabase未設定でもトップページと `/api/health` は起動できます。認証/CRUDはSupabase設定後に利用します。
+Supabase未設定でもトップページと `/api/health` は起動できます。認証・Todo CRUDはSupabase設定後に利用します。
 
 ## サンプルURL
 
 - `/auth/login` ログイン
 - `/auth/sign-up` サインアップ
-- `/dashboard` Todo CRUD（要ログイン・サンプル機能）
+- `/dashboard` Todo CRUD（削除可能なサンプル）
 - `/offline` PWAオフライン画面
 - `/api/health` ヘルスチェック
 
@@ -136,9 +145,11 @@ Supabase未設定でもトップページと `/api/health` は起動できます
 | `npm run dev` | 開発サーバー起動 |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript型チェック |
-| `npm test` | スモークテスト |
+| `npm test` | 共通基盤 + 現在含まれているサンプルのテスト |
 | `npm run build` | 本番ビルド |
 | `npm run check` | lint → typecheck → test → build |
+
+Todoサンプルを削除する場合は `tests/sample.test.mjs` も同時に削除します。`tests/core.test.mjs` は残します。
 
 ## ドキュメント
 
@@ -170,10 +181,12 @@ flowchart LR
     P["Push / Pull Request"] --> I["npm ci"]
     I --> L["lint"]
     L --> T["typecheck"]
-    T --> S["test"]
+    T --> S["core / sample tests"]
     S --> B["build"]
     B --> OK["CI Success"]
 ```
+
+共通基盤テストとサンプルテストを分離しているため、新規アプリでTodoサンプルを外すときはサンプルテストだけを一緒に外せます。
 
 ## 依存関係の保守
 
@@ -189,7 +202,7 @@ ESLint 10は、Next.js 16系の `eslint-config-next` が正式対応するまで
 
 ## テンプレートとしての運用
 
-このリポジトリ自体には案件固有仕様を積み上げません。サンプル機能は実装例として維持し、特定業務向けの機能追加は、このテンプレートから作成した各アプリ側で行います。
+このリポジトリ自体には案件固有仕様を積み上げません。Todoサンプルは実装例として維持し、特定業務向けの機能追加は、このテンプレートから作成した各アプリ側で行います。
 
 ## License
 
