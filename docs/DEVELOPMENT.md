@@ -1,5 +1,7 @@
 # Development
 
+Git / GitHub / GitHub Desktopの基本用語や、CommitとPushの違い、Pull Request、CI、Squash Mergeの流れがまだ分からない場合は、先に [../BEGINNER-GUIDE.md](../BEGINNER-GUIDE.md) を読んでください。このドキュメントは基本操作を理解した後の日常開発ルールを扱います。
+
 ## 基本ルール
 
 変更前後の環境確認にはdoctorを使います。
@@ -156,6 +158,8 @@ docs: Vercelデプロイ手順を更新
 ## Pull Request
 
 PRには目的、変更内容、確認方法、影響範囲、未対応事項を記載します。
+
+GitHub DesktopでBranch作成からPR作成までの具体的な操作を確認したい場合は [../BEGINNER-GUIDE.md](../BEGINNER-GUIDE.md) を参照してください。
 
 ## README 更新
 
