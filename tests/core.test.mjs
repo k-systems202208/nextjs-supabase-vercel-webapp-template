@@ -7,6 +7,8 @@ const packageJson = JSON.parse(read("package.json"));
 const gitignore = read(".gitignore");
 const envExample = read(".env.example");
 const serviceWorker = read("public/sw.js");
+const authActions = read("app/auth/actions.ts");
+const authConfirm = read("app/auth/confirm/route.ts");
 const readme = read("README.md");
 const customizing = read("docs/CUSTOMIZING.md");
 const supabaseSetup = read("docs/SUPABASE-SETUP.md");
@@ -62,6 +64,14 @@ test("common auth and PWA scaffold files exist", () => {
   ]) {
     assert.equal(existsSync(new URL(`../${path}`, import.meta.url)), true, `${path} is missing`);
   }
+});
+
+test("common auth default flow is not coupled to the optional Todo dashboard", () => {
+  assert.doesNotMatch(authActions, /redirect\("\/dashboard"\)/);
+  assert.doesNotMatch(authActions, /next=\/dashboard/);
+  assert.doesNotMatch(authConfirm, /return "\/dashboard"/);
+  assert.match(authActions, /redirect\("\/"\)/);
+  assert.match(authConfirm, /return "\/"/);
 });
 
 test("service worker does not cache authenticated routes", () => {
