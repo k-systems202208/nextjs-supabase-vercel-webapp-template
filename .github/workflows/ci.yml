@@ -19,6 +19,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate GitHub setup script
+        shell: pwsh
+        run: |
+          $setupPath = (Resolve-Path "./scripts/setup-github.ps1").Path
+          $bytes = [System.IO.File]::ReadAllBytes($setupPath)
+          if (
+            $bytes.Length -lt 3 -or
+            $bytes[0] -ne 0xEF -or
+            $bytes[1] -ne 0xBB -or
+            $bytes[2] -ne 0xBF
+          ) {
+            Write-Error "scripts/setup-github.ps1 must be UTF-8 with BOM for Windows PowerShell 5.1 compatibility."
+            exit 1
+          }
+
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            $setupPath,
+            [ref]$tokens,
+            [ref]$parseErrors
+          ) | Out-Null
+
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
