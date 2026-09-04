@@ -11,6 +11,9 @@ const serviceWorker = read("public/sw.js");
 const readme = read("README.md");
 const customizing = read("docs/CUSTOMIZING.md");
 const supabaseSetup = read("docs/SUPABASE-SETUP.md");
+const development = read("docs/DEVELOPMENT.md");
+const license = read("LICENSE");
+const dependabot = read(".github/dependabot.yml");
 const docsToVisualize = [
   "README.md",
   "GETTING-STARTED.md",
@@ -103,4 +106,17 @@ test("all primary documents include Mermaid diagrams", () => {
     const content = read(path);
     assert.match(content, /```mermaid[\s\S]*?```/, `${path} must include a Mermaid diagram`);
   }
+});
+
+test("public template has MIT license and Dependabot maintenance", () => {
+  assert.match(license, /^MIT License/m);
+  assert.match(license, /Copyright \(c\) 2026 k-systems202208/);
+  assert.match(dependabot, /package-ecosystem: npm/);
+  assert.match(dependabot, /package-ecosystem: github-actions/);
+  assert.match(dependabot, /interval: monthly/);
+  assert.match(dependabot, /dependency-name: eslint/);
+  assert.match(dependabot, /version-update:semver-major/);
+  assert.match(readme, /MIT License/);
+  assert.match(development, /ESLint 10/);
+  assert.match(development, /Dependabot/);
 });
