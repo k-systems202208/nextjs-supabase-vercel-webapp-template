@@ -70,5 +70,6 @@ jobs:
             "app/(sample)/dashboard" \
             "features/todos" \
             "supabase/sample/todos.sql" \
-            "tests/sample.test.mjs"
+            "tests/sample.test.mjs" \
+            ".next"
           npm run check
