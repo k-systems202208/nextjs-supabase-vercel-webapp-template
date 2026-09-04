@@ -2,24 +2,29 @@
 
 このテンプレートは、特定業務向けの完成アプリではなく、Next.js App Router + Supabase + Vercel を使ったWebアプリ開発の共通土台です。
 
-`todos` / `/dashboard` はAuth・CRUD・RLSを確認するためのサンプルです。新しいアプリでは自由に削除・置換してください。
+Todo CRUDは、Auth・CRUD・RLSの仕組みを確認するための**削除可能なサンプル**です。共通基盤とは分離しているため、新しいアプリではTodoサンプル一式だけを削除・置換できます。
 
 ## カスタマイズの全体像
 
 ```mermaid
 flowchart TD
     T["共通テンプレート"] --> K["残す共通基盤"]
+    T --> S["削除可能なTodoサンプル"]
     T --> C["案件ごとに変更"]
 
     K --> K1["Next.js / Supabase接続"]
     K --> K2["Authセッション更新"]
     K --> K3["RLS前提の設計"]
-    K --> K4["CI / 品質チェック"]
+    K --> K4["PWA / CI / 品質チェック"]
+
+    S --> S1["app/(sample)/dashboard"]
+    S --> S2["features/todos"]
+    S --> S3["supabase/sample/todos.sql"]
+    S --> S4["tests/sample.test.mjs"]
 
     C --> C1["アプリ名 / UI"]
-    C --> C2["Todoサンプル"]
-    C --> C3["Database / RLS"]
-    C --> C4["PWA / URL / 環境変数"]
+    C --> C2["独自Database / RLS"]
+    C --> C3["環境変数 / URL"]
 ```
 
 ## 1. 最初に決めること
@@ -31,6 +36,7 @@ Clone後、実装を始める前に最低限以下を決めます。
 - 主な利用者
 - 認証が必要か
 - 保存するデータ
+- データの所有者 / 共有範囲
 - 公開範囲
 - PWAが必要か
 - 本番URL
@@ -43,7 +49,32 @@ flowchart LR
     D --> E["PWA / 本番URL"]
 ```
 
-## 2. アプリ名・説明を変更する
+## 2. 共通基盤とサンプルの境界
+
+Todoサンプルは次の4か所に分離しています。
+
+```text
+app/(sample)/dashboard/       Todoサンプル画面。Route GroupなのでURLは /dashboard
+features/todos/               Todo用Server Action
+supabase/sample/todos.sql     Todoテーブル / GRANT / RLS
+tests/sample.test.mjs         Todoサンプル専用テスト
+```
+
+Todoを使わないアプリでは、上記4か所をまとめて削除してください。
+
+**削除しても残す共通基盤:** 
+
+- `app/auth/`
+- `lib/supabase/`
+- `proxy.ts`
+- `app/api/health/`
+- `app/manifest.ts` / `public/sw.js` 等のPWA基本構成
+- `tests/core.test.mjs`
+- lint / typecheck / build / GitHub Actions CI
+
+`tests/core.test.mjs` はTodoサンプルのファイルやSQLを必須にしていません。そのためTodoサンプルを削除するときは `tests/sample.test.mjs` だけを一緒に削除できます。
+
+## 3. アプリ名・説明を変更する
 
 最低限、以下を自分のアプリに合わせます。
 
@@ -55,37 +86,38 @@ flowchart LR
 
 リポジトリ名も新しいアプリ名へ変更することを推奨します。
 
-## 3. トップページ・UIを置き換える
+## 4. トップページ・UIを置き換える
 
-`app/page.tsx` と `app/globals.css` はサンプル表示です。アプリ要件に合わせて自由に作り替えてください。
+`app/page.tsx` と `app/globals.css` はテンプレートの案内画面です。アプリ要件に合わせて自由に作り替えてください。
 
 テンプレート側の見た目を維持する必要はありません。
 
-## 4. Todoサンプルを使わない場合
+## 5. Todoサンプルを使わない場合
 
-Todoはサンプル機能です。不要なら以下を削除または置換できます。
+Todoサンプルを削除するときは、次を**セットで**扱います。
 
 ```text
-app/dashboard/page.tsx
-app/dashboard/actions.ts
-supabase/schema.sql 内の public.todos
+app/(sample)/dashboard/
+features/todos/
+supabase/sample/todos.sql
+tests/sample.test.mjs
 ```
 
 ```mermaid
 flowchart TD
-    T["Todoサンプル"] --> P["app/dashboard/page.tsx"]
-    T --> A["app/dashboard/actions.ts"]
-    T --> S["supabase/schema.sql"]
-    T --> D["Todo関連テスト / ドキュメント"]
+    T["Todo sample"] --> P["app/(sample)/dashboard"]
+    T --> A["features/todos"]
+    T --> S["supabase/sample/todos.sql"]
+    T --> X["tests/sample.test.mjs"]
 ```
 
-Todoを削除した場合は、関連するテストとドキュメントも同時に更新してください。
+この4か所を削除した後に `npm run check` を実行し、共通基盤が正常なことを確認します。
 
-認証後のトップページとして `/dashboard` を別用途に再利用しても構いません。
+`/dashboard` を別用途に再利用する場合は、新しい `app/dashboard/` または任意のRoute Group内へ独自画面を作成して構いません。
 
-## 5. 独自テーブルへ置き換える
+## 6. 独自テーブルへ置き換える
 
-`supabase/schema.sql` の `todos` を参考に、アプリ固有のテーブルを設計します。
+Todoサンプルを参考にする場合は `supabase/sample/todos.sql` を読み、アプリ固有のテーブルとRLSを設計します。
 
 例:
 
@@ -102,13 +134,15 @@ create table public.items (
 
 ```mermaid
 flowchart LR
-    A["public.todos"] --> B["独自テーブル"]
+    A["Todo sample SQL"] --> B["独自テーブル"]
     B --> C["所有者 / 共有範囲"]
     C --> D["GRANT"]
     D --> E["RLS Policy"]
 ```
 
-## 6. RLSを設計する
+独自アプリでDB変更を継続管理する段階では、Supabase CLI migrationへの移行を推奨します。詳細は [DEVELOPMENT.md](DEVELOPMENT.md) を参照してください。
+
+## 7. RLSを設計する
 
 公開schemaの業務テーブルでは、原則としてRLSを有効化します。
 
@@ -135,9 +169,9 @@ flowchart TD
     RLS -->|"拒否"| NG["アクセス拒否"]
 ```
 
-## 7. 認証を使わない場合
+## 8. 認証を使わない場合
 
-公開サイトなど認証不要のアプリではAuth関連を削除できます。
+公開サイトなど認証不要のアプリではAuth関連を削除できます。ただしこれはTodoサンプル削除とは別のカスタマイズです。
 
 主な対象:
 
@@ -147,11 +181,11 @@ proxy.ts のAuthセッション更新
 lib/supabase/proxy.ts
 ```
 
-ただし、Supabaseをブラウザから利用する場合のRLSと権限設計は、認証の有無にかかわらず必要です。
+認証を外す場合はAuth関連のテスト・ドキュメント・リダイレクトも合わせて見直してください。
 
-削除後は `npm run check` を実行し、不要になった依存・テスト・ドキュメントも整理してください。
+Supabaseをブラウザから利用する場合のRLSと権限設計は、認証の有無にかかわらず必要です。
 
-## 8. PWAをカスタマイズする
+## 9. PWAをカスタマイズする
 
 以下を自分のアプリ用に変更します。
 
@@ -162,9 +196,9 @@ lib/supabase/proxy.ts
 
 Service Workerのキャッシュ方針は、個人情報や認証後レスポンスを不用意に保存しないよう注意してください。
 
-PWAが不要なら、Manifest・Service Worker・登録コンポーネントを削除することもできます。
+PWAが不要なら、Manifest・Service Worker・登録コンポーネントを削除できます。PWAもTodoサンプルとは別の共通機能です。
 
-## 9. 環境変数を設定する
+## 10. 環境変数を設定する
 
 `.env.example` は第三者が必要な設定項目を把握するためのテンプレートです。
 
@@ -172,7 +206,7 @@ PWAが不要なら、Manifest・Service Worker・登録コンポーネントを�
 
 秘密情報はGitHubへコミットしません。
 
-## 10. Vercelへ接続する
+## 11. Vercelへ接続する
 
 新しいアプリ用のGitHubリポジトリをVercelへImportし、Supabase関連の環境変数を設定します。
 
@@ -180,11 +214,18 @@ Supabase Authを使う場合は、Vercel Production URLをSupabase Authenticatio
 
 詳細は [DEPLOYMENT.md](DEPLOYMENT.md) を参照してください。
 
-## 11. テストをアプリ仕様へ置き換える
+## 12. テストをアプリ仕様へ置き換える
 
-`tests/scaffold.test.mjs` はテンプレート自体の基本構成を守るためのスモークテストです。
+テストは役割を分離しています。
 
-独自アプリでは、サンプルTodoを削除したらTodo固有テストも削除し、代わりにそのアプリの重要仕様をテストしてください。
+```text
+tests/core.test.mjs      共通基盤の保護
+tests/sample.test.mjs    Todoサンプルの保護
+```
+
+Todoを削除したら `tests/sample.test.mjs` も削除し、代わりにそのアプリの重要仕様をテストしてください。
+
+`tests/core.test.mjs` は原則残します。
 
 少なくとも以下は維持することを推奨します。
 
@@ -192,10 +233,10 @@ Supabase Authを使う場合は、Vercel Production URLをSupabase Authenticatio
 - lint
 - TypeScript型チェック
 - 秘密情報の混入防止
-- 主要ルート/主要機能のテスト
+- 主要ルート / 主要機能のテスト
 - production build
 
-## 12. カスタマイズ後の完了条件
+## 13. カスタマイズ後の完了条件
 
 以下を満たした状態を、新しいアプリの開発開始点とします。
 
@@ -215,14 +256,14 @@ flowchart LR
 さらに確認します。
 
 - アプリ名・説明がテンプレートのまま残っていない
-- 不要なTodoサンプルが残っていない
+- 不要なTodoサンプル4か所が残っていない
 - 独自テーブルのRLSが設計されている
 - `.env.example` が最新
 - PWA名・アイコンが独自アプリ用になっている
 - READMEが独自アプリの内容になっている
 - GitHub Actions CIが成功している
 
-## 13. このテンプレート本体へ追加しないもの
+## 14. このテンプレート本体へ追加しないもの
 
 このテンプレート本体では、特定アプリだけに必要な業務機能を増やしません。
 
