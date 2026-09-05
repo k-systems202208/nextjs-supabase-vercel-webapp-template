@@ -4,6 +4,7 @@ import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const packageJson = JSON.parse(read("package.json"));
+const lockfile = JSON.parse(read("package-lock.json"));
 const ci = read(".github/workflows/ci.yml");
 const readme = read("README.md");
 const gettingStarted = read("GETTING-STARTED.md");
@@ -21,6 +22,20 @@ test("developer doctor is part of the template contract", () => {
   assert.equal(packageJson.scripts.doctor, "node scripts/doctor.mjs");
   assert.match(ci, /npm run doctor/);
   assert.match(ci, /npm run check/);
+});
+
+test("supported Node runtime matches the CI contract", () => {
+  assert.equal(packageJson.engines.node, ">=22 <23");
+  assert.match(ci, /node-version: 22/);
+  assert.match(gettingStarted, /Node\.js 22系/);
+});
+
+test("Playwright is a reproducible development dependency", () => {
+  assert.equal(packageJson.devDependencies["@playwright/test"], "1.62.1");
+  assert.equal(lockfile.packages[""].devDependencies["@playwright/test"], "1.62.1");
+  assert.equal(packageJson.scripts["test:e2e:install"], "npx playwright install chromium");
+  assert.doesNotMatch(ci, /npm install --no-save/);
+  assert.match(ci, /npx playwright install --with-deps chromium/);
 });
 
 test("operations runbook uses the existing common health endpoint", () => {
@@ -68,6 +83,9 @@ test("sampleless smoke test protects the reusable common core", () => {
   assert.match(ci, /features\/todos/);
   assert.match(ci, /tests\/sample\.test\.mjs/);
   assert.match(ci, /e2e\/sample-todos\.spec\.mjs/);
+  assert.match(gettingStarted, /app\/\(sample\)\//);
+  assert.match(gettingStarted, /e2e\/sample-todos\.spec\.mjs/);
+  assert.doesNotMatch(gettingStarted, /サンプル4か所/);
   assert.match(smokeTest, /Use this template/);
   assert.match(smokeTest, /npm run check/);
   assert.match(smokeTest, /Pull Request/);
@@ -95,5 +113,6 @@ test("README, Getting Started and Development link beginner guidance", () => {
   assert.match(readme, /docs\/TEMPLATE-SMOKE-TEST\.md/);
   assert.match(development, /TEMPLATE-SMOKE-TEST\.md/);
   assert.match(development, /npm run test:e2e/);
+  assert.match(development, /PlaywrightはdevDependency/);
   assert.match(readme, /npm run doctor/);
 });
