@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
+const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const packageJson = JSON.parse(read("package.json"));
 const lockfile = JSON.parse(read("package-lock.json"));
@@ -20,6 +23,27 @@ const contributing = read("CONTRIBUTING.md");
 const issueTemplate = read(".github/ISSUE_TEMPLATE/change-request.md");
 const prTemplate = read(".github/pull_request_template.md");
 const proxyConfig = read("proxy.ts");
+
+const collectMarkdownFiles = (directory) => {
+  const files = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const fullPath = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...collectMarkdownFiles(fullPath));
+    } else if (entry.isFile() && entry.name.endsWith(".md")) {
+      files.push(fullPath);
+    }
+  }
+  return files;
+};
+
+const markdownFiles = () => [
+  ...readdirSync(root, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+    .map((entry) => join(root, entry.name)),
+  ...collectMarkdownFiles(join(root, "docs")),
+  ...collectMarkdownFiles(join(root, ".github")),
+];
 
 test("developer doctor is part of the template contract", () => {
   assert.equal(existsSync(new URL("../scripts/doctor.mjs", import.meta.url)), true);
@@ -123,6 +147,82 @@ test("verification design is part of issue PR and contribution contracts", () =>
   assert.match(readme, /docs\/QUALITY-VERIFICATION\.md/);
   assert.match(readme, /CONTRIBUTING\.md/);
   assert.match(development, /QUALITY-VERIFICATION\.md/);
+});
+
+test("GitHub Actions are pinned and ruleset requires the latest main", () => {
+  const actionRefs = [...ci.matchAll(/uses:\s+([^\s#]+)/g)].map((match) => match[1]);
+  assert.ok(actionRefs.length > 0);
+
+  for (const actionRef of actionRefs) {
+    if (actionRef.startsWith("./")) continue;
+    assert.match(actionRef, /^[^@]+@[0-9a-f]{40}$/);
+  }
+
+  const ruleset = JSON.parse(read("github/protect-main.ruleset.json"));
+  const statusRule = ruleset.rules.find((rule) => rule.type === "required_status_checks");
+  assert.equal(statusRule.parameters.strict_required_status_checks_policy, true);
+});
+
+test("security policy is separate from security design", () => {
+  const policy = read(".github/SECURITY.md");
+  const design = read("docs/SECURITY.md");
+
+  assert.match(policy, /Reporting a vulnerability/);
+  assert.match(policy, /Public Issue/);
+  assert.match(policy, /docs\/SECURITY\.md/);
+  assert.match(design, /セキュリティ全体像/);
+});
+
+test("repository internal Markdown links resolve", () => {
+  const broken = [];
+
+  for (const source of markdownFiles()) {
+    const content = readFileSync(source, "utf8");
+    for (const match of content.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/g)) {
+      const rawTarget = match[1].trim();
+      let target = rawTarget;
+
+      if (target.startsWith("<") && target.includes(">")) {
+        target = target.slice(1, target.indexOf(">"));
+      } else {
+        target = target.split(/\s+/, 1)[0];
+      }
+
+      if (
+        !target ||
+        target.startsWith("#") ||
+        target.startsWith("/") ||
+        target.startsWith("http://") ||
+        target.startsWith("https://") ||
+        target.startsWith("mailto:") ||
+        target.startsWith("tel:")
+      ) {
+        continue;
+      }
+
+      try {
+        target = decodeURIComponent(target.split("#", 1)[0].split("?", 1)[0]);
+      } catch {
+        broken.push(`${relative(root, source)} -> ${rawTarget} (invalid URL encoding)`);
+        continue;
+      }
+
+      if (!target) continue;
+
+      const candidate = resolve(dirname(source), target);
+      const fromRoot = relative(root, candidate);
+      if (fromRoot.startsWith("..") || isAbsolute(fromRoot)) {
+        broken.push(`${relative(root, source)} -> ${rawTarget} (outside repository)`);
+        continue;
+      }
+
+      if (!existsSync(candidate)) {
+        broken.push(`${relative(root, source)} -> ${rawTarget}`);
+      }
+    }
+  }
+
+  assert.deepEqual(broken, []);
 });
 
 test("README, Getting Started and Development link beginner guidance", () => {
