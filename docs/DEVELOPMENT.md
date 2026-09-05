@@ -48,7 +48,7 @@ flowchart LR
 
 確認項目:
 
-- Node.jsが22以上27未満か
+- Node.js 22系か
 - `package.json` / `package-lock.json` / `.env.example` が存在するか
 - `.env.local` がある場合、主要Supabase環境変数がサンプル値のままではないか
 
@@ -162,7 +162,7 @@ flowchart LR
 - major update は原則として個別に確認
 - Dependabot PRも通常のPRと同様にCI成功を必須条件として判断
 - 依存更新時は `package-lock.json` も同じPRで更新
-- PlaywrightはE2Eコマンド内で固定バージョンを指定し、更新時はBrowser E2Eを必ず通す
+- PlaywrightはdevDependencyとして固定し、package-lock.jsonで再現可能にする。更新時はBrowser E2Eを必ず通す
 
 ```mermaid
 flowchart LR

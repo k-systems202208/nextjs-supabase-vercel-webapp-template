@@ -16,7 +16,7 @@ function makeRepo() {
 
 test("parseNodeMajor reads the major version", () => {
   assert.equal(parseNodeMajor("22.18.0"), 22);
-  assert.equal(parseNodeMajor("26.1.0"), 26);
+  assert.equal(parseNodeMajor("23.1.0"), 23);
   assert.equal(Number.isNaN(parseNodeMajor("unknown")), true);
 });
 
@@ -26,7 +26,7 @@ test("parseEnv ignores comments and reads values", () => {
   assert.equal(env.get("B"), "two");
 });
 
-test("doctor passes required repository checks and only warns when env is absent", () => {
+test("doctor passes Node 22 repository checks and only warns when env is absent", () => {
   const root = makeRepo();
   try {
     const result = diagnose({ root, nodeVersion: "22.18.0" });
@@ -37,13 +37,37 @@ test("doctor passes required repository checks and only warns when env is absent
   }
 });
 
-test("doctor fails unsupported Node versions", () => {
+test("doctor fails Node versions below 22", () => {
   const root = makeRepo();
   try {
     const result = diagnose({ root, nodeVersion: "21.9.0" });
     assert.equal(result.failed, true);
     assert.equal(
-      result.checks.some((check) => check.level === "FAIL" && check.message.includes("対象外")),
+      result.checks.some(
+        (check) =>
+          check.level === "FAIL" &&
+          check.message.includes("対象外") &&
+          check.message.includes("Node.js 22"),
+      ),
+      true,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("doctor fails Node versions above 22", () => {
+  const root = makeRepo();
+  try {
+    const result = diagnose({ root, nodeVersion: "23.0.0" });
+    assert.equal(result.failed, true);
+    assert.equal(
+      result.checks.some(
+        (check) =>
+          check.level === "FAIL" &&
+          check.message.includes("対象外") &&
+          check.message.includes("Node.js 22"),
+      ),
       true,
     );
   } finally {

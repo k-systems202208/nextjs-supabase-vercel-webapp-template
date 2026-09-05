@@ -59,10 +59,8 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Install browser E2E runner
-        run: |
-          npm install --no-save --package-lock=false @playwright/test@1.62.1
-          npx playwright install --with-deps chromium
+      - name: Install Chromium for browser E2E
+        run: npx playwright install --with-deps chromium
 
       - name: Quality gate
         run: npm run check

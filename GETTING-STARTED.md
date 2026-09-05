@@ -26,7 +26,7 @@ flowchart TD
 
 - GitHubアカウント
 - GitHub Desktop
-- Node.js 22以上27未満
+- Node.js 22系（CIもNode.js 22で検証）
 - npm
 - Supabaseアカウント
 - Vercelアカウント（本番デプロイ時）
@@ -146,13 +146,14 @@ Secret Key / `service_role` / Database passwordは `NEXT_PUBLIC_` へ設定し�
 
 ## 7. 共通基盤とTodoサンプルの境界
 
-このテンプレートでは、Todoサンプルを次の4か所へ分離しています。
+このテンプレートでは、Todoサンプルを次の5グループへ分離しています。
 
 ```text
-app/(sample)/dashboard/       Todoサンプル画面（URLは /dashboard）
-features/todos/               Todo用Server Action
-supabase/sample/todos.sql     Todoテーブル / GRANT / RLS
-tests/sample.test.mjs         Todoサンプル専用テスト
+app/(sample)/                Todoサンプル画面 + Todo専用E2E fixture API
+features/todos/              Todo用Server Action + E2E fixture store
+supabase/sample/todos.sql    Todoテーブル / GRANT / RLS
+tests/sample.test.mjs        Todoサンプル専用契約テスト
+e2e/sample-todos.spec.mjs    Todoサンプル専用ブラウザE2E
 ```
 
 一方、次は共通基盤として原則残します。
@@ -173,10 +174,10 @@ flowchart TD
     T["Template"] --> C["Core"]
     T --> S["Todo Sample"]
     C --> C1["Supabase / Auth / PWA / Doctor / CI"]
-    S --> S1["dashboard / todos / sample SQL / sample test"]
+    S --> S1["sample画面 / todos / sample SQL / sample test / sample E2E"]
 ```
 
-Todoを使わない場合は、サンプル4か所をまとめて削除して構いません。共通テストはTodoサンプルの存在を必須にしていません。
+Todoを使わない場合は、サンプル5グループをまとめて削除して構いません。共通テストはTodoサンプルの存在を必須にしていません。
 
 ## 8. TodoサンプルDatabase / RLS
 
@@ -244,10 +245,11 @@ Supabase設定後は、別ユーザーを2人作成し、一方のTodoが他方�
 Todoを使わない場合は次を削除します。
 
 ```text
-app/(sample)/dashboard/
+app/(sample)/
 features/todos/
 supabase/sample/todos.sql
 tests/sample.test.mjs
+e2e/sample-todos.spec.mjs
 ```
 
 その後、自分の画面、業務処理、テーブル / RLS、テストを追加します。AuthやPWAも不要であれば個別に外せますが、Todoサンプルとは別の共通機能として扱います。
@@ -271,7 +273,7 @@ flowchart LR
     E --> F["完了"]
 ```
 
-Todoサンプルを削除した場合でも、`tests/sample.test.mjs` を一緒に削除していれば共通基盤テストだけで `npm run check` を継続できます。
+Todoサンプルを削除する場合は、`tests/sample.test.mjs` と `e2e/sample-todos.spec.mjs` も一緒に削除します。共通基盤の契約テストとAuth E2EはTodoサンプルに依存しません。
 
 ## 13. PWA確認
 
