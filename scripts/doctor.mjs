@@ -8,6 +8,7 @@ const REQUIRED_ENV = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
 ];
+const SUPPORTED_NODE_MAJOR = 22;
 
 export function parseNodeMajor(version) {
   const major = Number.parseInt(String(version).split(".")[0], 10);
@@ -36,8 +37,8 @@ export function diagnose({ root = ROOT, nodeVersion = process.versions.node } = 
   const add = (level, message) => checks.push({ level, message });
 
   const major = parseNodeMajor(nodeVersion);
-  if (!Number.isInteger(major) || major < 22 || major >= 27) {
-    add("FAIL", `Node.js ${nodeVersion} は対象外です。22以上27未満を使用してください。`);
+  if (!Number.isInteger(major) || major !== SUPPORTED_NODE_MAJOR) {
+    add("FAIL", `Node.js ${nodeVersion} は対象外です。Node.js 22を使用してください。`);
   } else {
     add("PASS", `Node.js ${nodeVersion}`);
   }
