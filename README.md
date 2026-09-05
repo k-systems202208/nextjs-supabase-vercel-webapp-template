@@ -11,13 +11,15 @@ Next.js App Router、Supabase、Vercel を使ったWebアプリ開発をすぐ�
 ```mermaid
 flowchart LR
     A["Use this template / Clone"] --> B["GitHub推奨設定"]
-    B --> C["npm ci / doctor"]
-    C --> D["Supabase設定 / 共通基盤確認"]
-    D --> E["Todoサンプル確認"]
-    E --> F["独自featureへ作り替え"]
-    F --> G["npm run check / Browser E2E"]
-    G --> H["Pull Request / CI"]
-    H --> I["Vercelデプロイ / 運用"]
+    B --> C["Issue + Verification Plan"]
+    C --> D["npm ci / doctor"]
+    D --> E["Supabase設定 / 共通基盤確認"]
+    E --> F["Todoサンプル確認"]
+    F --> G["独自featureへ作り替え"]
+    G --> H["npm run check / Browser E2E"]
+    H --> I["Pull Request / CI"]
+    I --> J["Risk / Oracle / Independent Verification"]
+    J --> K["Vercelデプロイ / 運用"]
 ```
 
 ## このテンプレートの考え方
@@ -39,6 +41,7 @@ flowchart LR
 - GitHub Actions CI
 - Todoサンプル削除後も成立するsampleless CI smoke test
 - GitHub推奨設定スクリプト / Protect main Ruleset
+- Issue / PR Verification PlanとQuality Verification方針
 - Dependabot
 - Vercelデプロイ・運用Runbook
 - feature拡張の共通契約
@@ -64,7 +67,7 @@ flowchart TD
     K --> K1["Next.js / Supabase接続"]
     K --> K2["Auth / RLS / PWA"]
     K --> K3["Doctor / Quality / Browser E2E / CI"]
-    K --> K4["GitHub protection / Operations"]
+    K --> K4["GitHub protection / Verification / Operations"]
     S --> S1["dashboard / todos / sample SQL / sample tests"]
 ```
 
@@ -149,11 +152,12 @@ Todo CRUDサンプルを試す場合だけ `supabase/sample/todos.sql` をSupaba
 
 ```mermaid
 flowchart LR
-    I["日本語Issue"] --> B["Issue番号入りBranch"]
+    I["日本語Issue + Verification Plan"] --> B["Issue番号入りBranch"]
     B --> W["Work / npm run check"]
     W --> P["Pull Request"]
     P --> Q["quality Required"]
-    Q --> R["Conversation resolved"]
+    Q --> V["Risk / Oracle / Independent Verification"]
+    V --> R["Conversation resolved"]
     R --> M["Squash Merge"]
 ```
 
@@ -166,6 +170,8 @@ flowchart LR
 - Squash Mergeのみ
 - Merge後のhead branch自動削除
 
+Issue / PRの書き方とMerge前チェックは [CONTRIBUTING.md](CONTRIBUTING.md)、Risk・Test Oracle・Falsification・Independent Verificationの考え方は [docs/QUALITY-VERIFICATION.md](docs/QUALITY-VERIFICATION.md) を基準にします。**CIのGreenは重要なSignalですが、GreenだけでQualityを断定しません。**
+
 ## ドキュメント - 目的から選ぶ
 
 「上から全部読む」のではなく、今やりたいことに合わせて選んでください。
@@ -176,6 +182,7 @@ flowchart TD
     Q -->|"Gitも初めて"| B["BEGINNER-GUIDE"]
     Q -->|"まず起動したい"| G["GETTING-STARTED"]
     Q -->|"GitHubを安全に設定したい"| H["GITHUB-SETUP"]
+    Q -->|"品質保証を設計したい"| V["QUALITY-VERIFICATION / CONTRIBUTING"]
     Q -->|"自分のアプリに変えたい"| C["CUSTOMIZING / EXTENDING"]
     Q -->|"テンプレートとして受入確認したい"| S["TEMPLATE-SMOKE-TEST"]
     Q -->|"技術を理解したい"| A["ARCHITECTURE / SUPABASE / AUTH / PWA / SECURITY"]
@@ -187,6 +194,12 @@ flowchart TD
 - [BEGINNER-GUIDE.md](BEGINNER-GUIDE.md) - Git / GitHub / GitHub Desktopをゼロから説明し、最初のPRを練習
 - [GETTING-STARTED.md](GETTING-STARTED.md) - Clone後のセットアップ、初回起動、Supabase設定への導線
 - [docs/GITHUB-SETUP.md](docs/GITHUB-SETUP.md) - Ruleset / Required Check / Merge設定を自動適用
+
+### 品質保証・開発ルール
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Issue / Branch / PR / MergeとVerification Planの運用ルール
+- [docs/QUALITY-VERIFICATION.md](docs/QUALITY-VERIFICATION.md) - Risk / Test Oracle / Test Layer / Falsification / Independent Verification
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - 日常開発、CI、Browser E2E、依存更新
 
 ### 自分のアプリへ変える・受入確認する
 
@@ -202,15 +215,16 @@ flowchart TD
 - [docs/PWA.md](docs/PWA.md)
 - [docs/SECURITY.md](docs/SECURITY.md)
 
-### 開発・公開・運用する
+### 公開・運用する
 
-- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 - [docs/OPERATIONS.md](docs/OPERATIONS.md)
 
 ## CI
 
 `main` へのPushおよびPull Requestで、GitHub設定スクリプトのBOM / PowerShell構文を確認した後、`npm run doctor` → `npm ci` → `npm run check` → **Chromium Browser keyboard E2E** を実行します。さらにCI workspace上でTodoサンプルとTodo専用E2Eを削除し、もう一度 `npm run check` を実行します。これにより、**実際の打鍵・クリック操作**と**サンプルを外しても共通基盤が成立すること**を継続検証します。`quality` がmainのRequired Status Checkです。
+
+CIがGreenなら上記のSignalは満たしていますが、実SupabaseのRLS・確認メール・Vercel Productionなど、CI外のRiskまで自動的に保証するわけではありません。PRのVerification Planで保証範囲と未保証範囲を明示します。
 
 ## 依存関係の保守
 

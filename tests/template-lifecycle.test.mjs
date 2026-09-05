@@ -15,6 +15,10 @@ const operations = read("docs/OPERATIONS.md");
 const extending = read("docs/EXTENDING.md");
 const smokeTest = read("docs/TEMPLATE-SMOKE-TEST.md");
 const thirdPartyValidation = read("docs/THIRD-PARTY-VALIDATION.md");
+const qualityVerification = read("docs/QUALITY-VERIFICATION.md");
+const contributing = read("CONTRIBUTING.md");
+const issueTemplate = read(".github/ISSUE_TEMPLATE/change-request.md");
+const prTemplate = read(".github/pull_request_template.md");
 const proxyConfig = read("proxy.ts");
 
 test("developer doctor is part of the template contract", () => {
@@ -102,6 +106,23 @@ test("third-party validation records real service checks", () => {
   assert.match(thirdPartyValidation, /\/auth\/confirm/);
   assert.match(thirdPartyValidation, /Vercel Production/);
   assert.match(thirdPartyValidation, /Auth Proxy/);
+});
+
+test("verification design is part of issue PR and contribution contracts", () => {
+  for (const content of [qualityVerification, contributing, issueTemplate, prTemplate]) {
+    assert.match(content, /Verification Plan/);
+    assert.match(content, /Risk Level/);
+    assert.match(content, /Test Oracle/);
+    assert.match(content, /Independent Verification/);
+  }
+
+  assert.match(qualityVerification, /Falsification/);
+  assert.match(qualityVerification, /High Risk/);
+  assert.match(qualityVerification, /Mutation Testing/);
+  assert.match(prTemplate, /Greenだけでは保証しない範囲/);
+  assert.match(readme, /docs\/QUALITY-VERIFICATION\.md/);
+  assert.match(readme, /CONTRIBUTING\.md/);
+  assert.match(development, /QUALITY-VERIFICATION\.md/);
 });
 
 test("README, Getting Started and Development link beginner guidance", () => {
