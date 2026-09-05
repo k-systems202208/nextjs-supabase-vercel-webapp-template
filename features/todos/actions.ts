@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { addE2ETodo, deleteE2ETodo, toggleE2ETodo } from "@/features/todos/e2e-store";
+import { isBrowserE2EMode } from "@/lib/e2e/mode";
 import { createClient } from "@/lib/supabase/server";
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -30,6 +32,12 @@ export async function addTodo(formData: FormData) {
     redirect(dashboardError("Todoは1〜200文字で入力してください。"));
   }
 
+  if (isBrowserE2EMode()) {
+    addE2ETodo(title);
+    revalidatePath("/dashboard");
+    return;
+  }
+
   const supabase = await authenticatedClient();
   const { error } = await supabase.from("todos").insert({ title });
 
@@ -47,6 +55,12 @@ export async function toggleTodo(formData: FormData) {
 
   if (!uuidPattern.test(id)) {
     redirect(dashboardError("不正なTodo IDです。"));
+  }
+
+  if (isBrowserE2EMode()) {
+    toggleE2ETodo(id);
+    revalidatePath("/dashboard");
+    return;
   }
 
   const nextCompleted = completedValue !== "true";
@@ -69,6 +83,12 @@ export async function deleteTodo(formData: FormData) {
 
   if (!uuidPattern.test(id)) {
     redirect(dashboardError("不正なTodo IDです。"));
+  }
+
+  if (isBrowserE2EMode()) {
+    deleteE2ETodo(id);
+    revalidatePath("/dashboard");
+    return;
   }
 
   const supabase = await authenticatedClient();
