@@ -31,16 +31,37 @@ npm run test:e2e
 
 ```mermaid
 flowchart LR
-    A["Issue / 要求"] --> D["npm run doctor"]
-    D --> B["feature / fix branch"]
-    B --> C["実装"]
+    A["Issue + Verification Plan"] --> D["npm run doctor"]
+    D --> B["Issue番号入りbranch"]
+    B --> C["実装 / test / docs"]
     C --> Q["npm run check"]
     Q --> E2E["Browser E2E"]
     E2E --> E["Commit / Push"]
     E --> F["Pull Request"]
     F --> G["GitHub Actions CI"]
-    G --> H["merge"]
+    G --> V["Risk / Oracle / Independent Verification確認"]
+    V --> H["Squash Merge"]
 ```
+
+mainへ直接Commitせず、日本語Issue → Issue番号入りBranch → Pull Request → `quality` CI → Squash Mergeを基本とします。Contributionルールは [../CONTRIBUTING.md](../CONTRIBUTING.md) を参照してください。
+
+## Verification Design
+
+**CIがGreenであることは品質そのものではなく、定義済みの評価条件を満たしたSignalです。**
+
+振る舞いや品質契約を変更する場合は、実装前にIssueで最低限次を定義します。
+
+- Risk Level: Low / Medium / High
+- Important Risk: 何が壊れたら困るか
+- Correct State / Test Oracle: 何を正しい状態とするか
+- Verification Layer: Static / Contract / Build / Browser E2E / Sampleless / Integration / Manual / Operations
+- Blocking Signal: 何が失敗したらMergeを止めるか
+- Falsification / Negative Case: 実装が誤っていたら失敗するケース
+- Independent Verification: 実装Loopと異なる評価軸
+
+AI / Coding AgentへProduction CodeとTest Codeの両方を任せても構いませんが、AI自身の「全部Greenなので問題ありません」だけを最終Quality Gateにはしません。High Risk変更では、人間のJudgmentまたは実装Loopとは異なる受入観点を残します。
+
+Risk Level、Test Layer、Mutation Testingを標準必須化しない理由などの詳細は [QUALITY-VERIFICATION.md](QUALITY-VERIFICATION.md) を参照してください。
 
 ## Doctor
 
@@ -63,6 +84,8 @@ CI成功をもって作業完了と報告する場合、最低限以下を併記
 2. 修正ドキュメント
 3. 修正・追加テスト
 4. CI結果
+5. 重要なRiskと、それを確認したVerification Signal
+6. Greenだけでは未保証の範囲が残る場合はその内容
 
 ```mermaid
 flowchart LR
@@ -78,7 +101,7 @@ flowchart LR
     Q2 --> OK["CI Success"]
 ```
 
-CIもローカルと同じ `npm run check` を品質ゲートの入口にし、その後にPlaywright Chromiumで実ブラウザ操作を確認します。
+CIもローカルと同じ `npm run check` を品質ゲートの入口にし、その後にPlaywright Chromiumで実ブラウザ操作を確認します。ただしCIがすべてGreenでも、Verification PlanのRiskを観測していない場合はMerge判断の根拠として不十分です。
 
 ## テストの役割分離
 
@@ -98,6 +121,8 @@ e2e/sample-todos.spec.mjs          Todoサンプル専用の実打鍵・クリ�
 Todoサンプルを削除する場合は `tests/sample.test.mjs` と `e2e/sample-todos.spec.mjs` も一緒に削除します。`tests/core.test.mjs`、`tests/browser-e2e.test.mjs`、`e2e/auth.spec.mjs`、doctor、lifecycleテストはTodo固有ファイルの存在に依存しないため、独自アプリでも原則として残します。
 
 新しい業務機能を追加した場合は、その機能の契約テストとブラウザE2Eを別ファイルとして追加してください。拡張方針は [EXTENDING.md](EXTENDING.md) を参照してください。
+
+振る舞い変更では、正常系だけでなく「実装が誤っていたら失敗する」Falsification観点を最低1つ検討します。例として、不正入力、未認証、他利用者Row、Productionでのfixture隔離、認証RouteのService Worker Cacheなどがあります。
 
 ## Browser keyboard E2E
 
@@ -122,7 +147,7 @@ NODE_ENV != production
 
 の場合だけfixtureが有効です。Productionでは `E2E_TEST_MODE=1` が誤設定されてもfixtureへ切り替わりません。
 
-実SupabaseのAuth / RLS / Vercel Production接続は、このE2Eとは別の受入確認として扱います。
+実SupabaseのAuth / RLS / Vercel Production接続は、このE2Eとは別の受入確認として扱います。Browser E2EがGreenでも、実Supabase固有のRLS・確認メール・Production envまでは保証しません。
 
 ## Template smoke test
 
@@ -148,6 +173,8 @@ e2e/sample-todos.spec.mjs
 
 新しいアプリでは、自分のデータモデルとRLSを設計します。案件開始後にDB変更を継続管理する場合はSupabase CLIのmigrationへ移行します。migrationファイルはCLIで生成し、手作業で日時ファイル名を作らない運用にします。
 
+Schema / RLS / GRANTはHigh Riskとして扱い、SQLが実行できることだけでなく「誰がどのRowを読める・変更できるか」をTest Oracleとして確認します。
+
 ```mermaid
 flowchart LR
     A["Todo sample SQL"] --> B["独自Schema / RLS"]
@@ -164,6 +191,7 @@ flowchart LR
 - Dependabot PRも通常のPRと同様にCI成功を必須条件として判断
 - 依存更新時は `package-lock.json` も同じPRで更新
 - PlaywrightはdevDependencyとして固定し、package-lock.jsonで再現可能にする。更新時はBrowser E2Eを必ず通す
+- major updateはHigh Riskとして、Release Note / compatibilityとRollback観点も確認
 
 ```mermaid
 flowchart LR
@@ -219,10 +247,19 @@ docs: Vercelデプロイ手順を更新
 
 ## Pull Request
 
-PRには目的、変更内容、確認方法、影響範囲、未対応事項を記載します。
+`.github/pull_request_template.md` を使い、最低限次を記載します。
+
+- 対応Issue
+- 変更内容
+- Verification Plan
+- Greenが保証する範囲 / Greenだけでは保証しない範囲
+- テスト
+- 影響範囲
+- Supabase / Auth / env / PWA / dependency / deploy影響
+- README / docs更新
 
 GitHub DesktopでBranch作成からPR作成までの具体的な操作を確認したい場合は [../BEGINNER-GUIDE.md](../BEGINNER-GUIDE.md) を参照してください。
 
 ## README 更新
 
-セットアップ、環境変数、開発コマンド、デプロイ、運用、拡張契約、CIルール、ブラウザE2Eが変わった場合はREADME / docsも同じ変更で更新します。
+セットアップ、環境変数、開発コマンド、デプロイ、運用、拡張契約、CIルール、ブラウザE2E、Verification Designが変わった場合はREADME / docsも同じ変更で更新します。
