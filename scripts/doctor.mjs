@@ -32,6 +32,22 @@ function isPlaceholder(value) {
   return /your-project|your-key|example\.com/i.test(value);
 }
 
+export function isHttpUrl(value) {
+  if (!value) return false;
+
+  try {
+    const parsed = new URL(value);
+    return (
+      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+      Boolean(parsed.hostname) &&
+      !parsed.username &&
+      !parsed.password
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function diagnose({ root = ROOT, nodeVersion = process.versions.node } = {}) {
   const checks = [];
   const add = (level, message) => checks.push({ level, message });
@@ -60,6 +76,8 @@ export function diagnose({ root = ROOT, nodeVersion = process.versions.node } = 
       const value = env.get(name);
       if (isPlaceholder(value)) {
         add("WARN", `${name} が未設定またはサンプル値です。`);
+      } else if (name === "NEXT_PUBLIC_SUPABASE_URL" && !isHttpUrl(value)) {
+        add("FAIL", `${name} は有効なHTTP(S) URLではありません。`);
       } else {
         add("PASS", `${name} を確認`);
       }
