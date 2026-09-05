@@ -15,16 +15,17 @@ flowchart TD
     K --> K1["Next.js / Supabase接続"]
     K --> K2["Authセッション更新"]
     K --> K3["RLS前提の設計"]
-    K --> K4["PWA / CI / 品質チェック"]
+    K --> K4["PWA / CI / 品質チェック / 共通Auth E2E"]
 
-    S --> S1["app/(sample)/dashboard"]
+    S --> S1["app/(sample)"]
     S --> S2["features/todos"]
     S --> S3["supabase/sample/todos.sql"]
     S --> S4["tests/sample.test.mjs"]
+    S --> S5["e2e/sample-todos.spec.mjs"]
 
     C --> C1["アプリ名 / UI"]
     C --> C2["独自Database / RLS"]
-    C --> C3["環境変数 / URL"]
+    C --> C3["独自Browser E2E"]
 ```
 
 ## 1. 最初に決めること
@@ -51,28 +52,33 @@ flowchart LR
 
 ## 2. 共通基盤とサンプルの境界
 
-Todoサンプルは次の4か所に分離しています。
+Todoサンプルは次の5グループに分離しています。
 
 ```text
-app/(sample)/dashboard/       Todoサンプル画面。Route GroupなのでURLは /dashboard
-features/todos/               Todo用Server Action
-supabase/sample/todos.sql     Todoテーブル / GRANT / RLS
-tests/sample.test.mjs         Todoサンプル専用テスト
+app/(sample)/                Todo画面 + Todo専用E2E fixture API
+features/todos/              Todo用Server Action + E2E fixture store
+supabase/sample/todos.sql    Todoテーブル / GRANT / RLS
+tests/sample.test.mjs        Todoサンプル専用契約テスト
+e2e/sample-todos.spec.mjs    Todoサンプル専用ブラウザE2E
 ```
 
-Todoを使わないアプリでは、上記4か所をまとめて削除してください。
+Todoを使わないアプリでは、上記5グループをまとめて削除してください。
 
 **削除しても残す共通基盤:** 
 
 - `app/auth/`
 - `lib/supabase/`
+- `lib/e2e/mode.ts`
+- `e2e/auth.spec.mjs`
+- `playwright.config.mjs`
 - `proxy.ts`
 - `app/api/health/`
 - `app/manifest.ts` / `public/sw.js` 等のPWA基本構成
 - `tests/core.test.mjs`
+- `tests/browser-e2e.test.mjs`
 - lint / typecheck / build / GitHub Actions CI
 
-`tests/core.test.mjs` はTodoサンプルのファイルやSQLを必須にしていません。そのためTodoサンプルを削除するときは `tests/sample.test.mjs` だけを一緒に削除できます。
+共通側はTodoサンプルのファイルやSQLを必須にしていません。そのためTodoサンプルを削除した後も `npm run check` が成立します。
 
 ## 3. アプリ名・説明を変更する
 
@@ -97,21 +103,23 @@ Todoを使わないアプリでは、上記4か所をまとめて削除してく
 Todoサンプルを削除するときは、次を**セットで**扱います。
 
 ```text
-app/(sample)/dashboard/
+app/(sample)/
 features/todos/
 supabase/sample/todos.sql
 tests/sample.test.mjs
+e2e/sample-todos.spec.mjs
 ```
 
 ```mermaid
 flowchart TD
-    T["Todo sample"] --> P["app/(sample)/dashboard"]
+    T["Todo sample"] --> P["app/(sample)"]
     T --> A["features/todos"]
     T --> S["supabase/sample/todos.sql"]
     T --> X["tests/sample.test.mjs"]
+    T --> E["e2e/sample-todos.spec.mjs"]
 ```
 
-この4か所を削除した後に `npm run check` を実行し、共通基盤が正常なことを確認します。
+削除した後に `npm run check` を実行し、共通基盤が正常なことを確認します。
 
 `/dashboard` を別用途に再利用する場合は、新しい `app/dashboard/` または任意のRoute Group内へ独自画面を作成して構いません。
 
@@ -179,6 +187,7 @@ flowchart TD
 app/auth/
 proxy.ts のAuthセッション更新
 lib/supabase/proxy.ts
+e2e/auth.spec.mjs
 ```
 
 認証を外す場合はAuth関連のテスト・ドキュメント・リダイレクトも合わせて見直してください。
@@ -219,13 +228,23 @@ Supabase Authを使う場合は、Vercel Production URLをSupabase Authenticatio
 テストは役割を分離しています。
 
 ```text
-tests/core.test.mjs      共通基盤の保護
-tests/sample.test.mjs    Todoサンプルの保護
+tests/core.test.mjs         共通基盤の保護
+tests/browser-e2e.test.mjs  共通E2E契約の保護
+tests/sample.test.mjs       Todoサンプルの保護
+e2e/auth.spec.mjs           共通Auth実打鍵E2E
+e2e/sample-todos.spec.mjs   Todoサンプル実打鍵E2E
 ```
 
-Todoを削除したら `tests/sample.test.mjs` も削除し、代わりにそのアプリの重要仕様をテストしてください。
+Todoを削除したら `tests/sample.test.mjs` と `e2e/sample-todos.spec.mjs` も削除し、代わりにそのアプリの重要仕様と主要画面操作をテストしてください。
 
-`tests/core.test.mjs` は原則残します。
+独自feature用E2Eでは、表示確認だけでなく、実際に入力欄へ文字を打ち、追加・更新・削除など利用者の主要操作を行うことを推奨します。
+
+```powershell
+npm run test:e2e:install
+npm run test:e2e
+```
+
+`tests/core.test.mjs`、`tests/browser-e2e.test.mjs`、共通Authを使う場合の `e2e/auth.spec.mjs` は原則残します。
 
 少なくとも以下は維持することを推奨します。
 
@@ -233,7 +252,8 @@ Todoを削除したら `tests/sample.test.mjs` も削除し、代わりにその
 - lint
 - TypeScript型チェック
 - 秘密情報の混入防止
-- 主要ルート / 主要機能のテスト
+- 主要ルート / 主要機能の契約テスト
+- 主要画面のブラウザ打鍵・クリックE2E
 - production build
 
 ## 13. カスタマイズ後の完了条件
@@ -242,6 +262,7 @@ Todoを削除したら `tests/sample.test.mjs` も削除し、代わりにその
 
 ```powershell
 npm run check
+npm run test:e2e
 ```
 
 ```mermaid
@@ -250,13 +271,15 @@ flowchart LR
     B --> C["typecheck"]
     C --> D["test"]
     D --> E["build"]
-    E --> F["GitHub Actions CI"]
+    E --> F["Browser E2E"]
+    F --> G["GitHub Actions CI"]
 ```
 
 さらに確認します。
 
 - アプリ名・説明がテンプレートのまま残っていない
-- 不要なTodoサンプル4か所が残っていない
+- 不要なTodoサンプル5グループが残っていない
+- 独自feature用のブラウザE2Eへ置き換えた
 - 独自テーブルのRLSが設計されている
 - `.env.example` が最新
 - PWA名・アイコンが独自アプリ用になっている
