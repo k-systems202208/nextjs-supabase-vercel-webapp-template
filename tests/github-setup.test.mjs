@@ -62,6 +62,8 @@ test("template repository setup avoids full JSON parsing on Windows PowerShell 5
   assert.match(templateSetupScript, /"--jq", "\.permissions\.admin"/);
   assert.match(templateSetupScript, /"--jq", "\.is_template"/);
   assert.match(templateSetupScript, /"--jq", "\.has_wiki"/);
-  assert.match(templateSetupScript, /"--jq", "\.names\[\]"/);
+  assert.match(templateSetupScript, /\.names \| sort \| join/);
   assert.match(templateSetupScript, /strict_required_status_checks_policy/);
+  assert.match(templateSetupScript, /Invoke-GhText -Arguments/);
+  assert.equal(templateSetupScript.includes("$topicsText -split [Environment]::NewLine"), false);
 });
