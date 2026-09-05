@@ -15,7 +15,7 @@ flowchart LR
     C --> D["Supabase設定 / 共通基盤確認"]
     D --> E["Todoサンプル確認"]
     E --> F["独自featureへ作り替え"]
-    F --> G["npm run check"]
+    F --> G["npm run check / Browser E2E"]
     G --> H["Pull Request / CI"]
     H --> I["Vercelデプロイ / 運用"]
 ```
@@ -35,6 +35,7 @@ flowchart LR
 - `/api/health`
 - `npm run doctor` による環境診断
 - lint / typecheck / test / build
+- Playwright ChromiumによるAuth実打鍵E2E
 - GitHub Actions CI
 - Todoサンプル削除後も成立するsampleless CI smoke test
 - GitHub推奨設定スクリプト / Protect main Ruleset
@@ -47,13 +48,14 @@ flowchart LR
 Todoサンプルは、共通基盤から分離して次の場所へまとめています。
 
 ```text
-app/(sample)/dashboard/       Todoサンプル画面（URLは /dashboard）
-features/todos/               Todo用Server Action
-supabase/sample/todos.sql     Todoテーブル / GRANT / RLS
-tests/sample.test.mjs         Todoサンプル専用テスト
+app/(sample)/                Todoサンプル画面 + E2E fixture API
+features/todos/              Todo用Server Action + E2E fixture store
+supabase/sample/todos.sql    Todoテーブル / GRANT / RLS
+tests/sample.test.mjs        Todoサンプル専用契約テスト
+e2e/sample-todos.spec.mjs    Todoサンプル専用ブラウザE2E
 ```
 
-Todoを使わない新規アプリでは、上記のサンプル一式を削除し、自分の画面・業務処理・Database/RLS・テストへ置き換えます。共通テスト `tests/core.test.mjs` はTodoサンプルの存在に依存しません。
+Todoを使わない新規アプリでは、上記のサンプル一式を削除し、自分の画面・業務処理・Database/RLS・テスト・ブラウザE2Eへ置き換えます。共通テスト `tests/core.test.mjs`、共通Auth E2E `e2e/auth.spec.mjs` はTodoサンプルの存在に依存しません。
 
 ```mermaid
 flowchart TD
@@ -61,9 +63,9 @@ flowchart TD
     T --> S["削除可能なTodoサンプル"]
     K --> K1["Next.js / Supabase接続"]
     K --> K2["Auth / RLS / PWA"]
-    K --> K3["Doctor / Quality / CI"]
+    K --> K3["Doctor / Quality / Browser E2E / CI"]
     K --> K4["GitHub protection / Operations"]
-    S --> S1["dashboard / todos / sample SQL / sample test"]
+    S --> S1["dashboard / todos / sample SQL / sample tests"]
 ```
 
 具体的な作り替え手順は [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md) を参照してください。
@@ -76,6 +78,7 @@ flowchart TD
 - Supabase (`@supabase/ssr` / `@supabase/supabase-js`)
 - Vercel
 - ESLint 9系
+- Playwright 1.62.1 / Chromium E2E
 - GitHub Actions CI
 - Node.js 22
 
@@ -132,9 +135,13 @@ Todo CRUDサンプルを試す場合だけ `supabase/sample/todos.sql` をSupaba
 | `npm run doctor` | Node / lockfile / envの環境診断 |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript型チェック |
-| `npm test` | 共通基盤 + 現在含まれているサンプルのテスト |
+| `npm test` | 共通基盤 + 現在含まれているサンプルの契約テスト |
 | `npm run build` | 本番ビルド |
 | `npm run check` | lint → typecheck → test → build |
+| `npm run test:e2e:install` | ローカル用Chromiumを初回インストール |
+| `npm run test:e2e` | ChromiumでAuth / サンプル画面を実際に打鍵・クリックして確認 |
+
+`npm run test:e2e` は実Supabaseや確認メールへ依存しない専用fixtureで動作します。fixtureは `E2E_TEST_MODE=1` かつ非Productionの場合だけ有効です。ProductionのSupabase / RLS確認は別途実サービス上で行います。
 
 ## GitHub運用
 
@@ -203,7 +210,7 @@ flowchart TD
 
 ## CI
 
-`main` へのPushおよびPull Requestで、GitHub設定スクリプトのBOM / PowerShell構文を確認した後、`npm run doctor` → `npm ci` → `npm run check` を実行します。さらにCI workspace上でTodoサンプルを削除し、もう一度 `npm run check` を実行します。これにより**サンプルを外しても共通基盤が成立すること**を継続検証します。`quality` がmainのRequired Status Checkです。
+`main` へのPushおよびPull Requestで、GitHub設定スクリプトのBOM / PowerShell構文を確認した後、`npm run doctor` → `npm ci` → `npm run check` → **Chromium Browser keyboard E2E** を実行します。さらにCI workspace上でTodoサンプルとTodo専用E2Eを削除し、もう一度 `npm run check` を実行します。これにより、**実際の打鍵・クリック操作**と**サンプルを外しても共通基盤が成立すること**を継続検証します。`quality` がmainのRequired Status Checkです。
 
 ## 依存関係の保守
 
@@ -214,6 +221,8 @@ ESLint 10はNext.js 16系の `eslint-config-next` が正式対応するまで強
 ## セキュリティ
 
 ブラウザで使用するのはPublishable Keyのみです。Secret Key / `service_role` / DB passwordを `NEXT_PUBLIC_` へ設定したりGitHubへコミットしたりしないでください。認可はRLSを最終防御層として維持します。
+
+E2E fixtureはProductionでは有効化されません。`E2E_TEST_MODE=1` をProductionへ設定しても、`NODE_ENV=production` ではfixture処理を使用しません。
 
 ## テンプレートとしての運用
 

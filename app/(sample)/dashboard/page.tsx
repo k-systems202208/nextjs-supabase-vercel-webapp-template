@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
 import { addTodo, deleteTodo, toggleTodo } from "@/features/todos/actions";
+import { listE2ETodos } from "@/features/todos/e2e-store";
+import { isBrowserE2EMode } from "@/lib/e2e/mode";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,33 +23,40 @@ function first(value: string | string[] | undefined) {
 export default async function DashboardPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const actionError = first(params.error);
+  let todos: Todo[] = [];
+  let loadError = false;
 
-  if (!isSupabaseConfigured()) {
-    return (
-      <main className="shell">
-        <section className="card">
-          <h1>Dashboard</h1>
-          <p>Supabase が未設定です。.env.local を設定してから再度開いてください。</p>
-          <Link href="/">トップへ戻る</Link>
-        </section>
-      </main>
-    );
+  if (isBrowserE2EMode()) {
+    todos = listE2ETodos();
+  } else {
+    if (!isSupabaseConfigured()) {
+      return (
+        <main className="shell">
+          <section className="card">
+            <h1>Dashboard</h1>
+            <p>Supabase が未設定です。.env.local を設定してから再度開いてください。</p>
+            <Link href="/">トップへ戻る</Link>
+          </section>
+        </main>
+      );
+    }
+
+    const supabase = await createClient();
+    const { data: authData, error: authError } = await supabase.auth.getClaims();
+    const userId = authData?.claims?.sub;
+
+    if (authError || typeof userId !== "string") {
+      redirect("/auth/login");
+    }
+
+    const { data, error } = await supabase
+      .from("todos")
+      .select("id,title,is_complete,created_at")
+      .order("created_at", { ascending: false });
+
+    todos = (data ?? []) as Todo[];
+    loadError = Boolean(error);
   }
-
-  const supabase = await createClient();
-  const { data: authData, error: authError } = await supabase.auth.getClaims();
-  const userId = authData?.claims?.sub;
-
-  if (authError || typeof userId !== "string") {
-    redirect("/auth/login");
-  }
-
-  const { data, error } = await supabase
-    .from("todos")
-    .select("id,title,is_complete,created_at")
-    .order("created_at", { ascending: false });
-
-  const todos = (data ?? []) as Todo[];
 
   return (
     <main className="shell dashboard-shell">
@@ -63,7 +72,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
       </header>
 
       {actionError ? <p className="notice error">{actionError}</p> : null}
-      {error ? (
+      {loadError ? (
         <section className="card">
           <h2>Database setup required</h2>
           <p>todos テーブルを取得できませんでした。</p>
@@ -78,6 +87,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
                 name="title"
                 maxLength={200}
                 placeholder="例: 認証後のCRUDを確認する"
+                aria-label="Todoタイトル"
                 required
               />
               <button type="submit" className="button primary">追加</button>
@@ -89,7 +99,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
             {todos.length === 0 ? <p className="muted">まだTodoはありません。</p> : null}
             <ul className="todo-list">
               {todos.map((todo) => (
-                <li key={todo.id} className="todo-row">
+                <li key={todo.id} className="todo-row" data-todo-id={todo.id}>
                   <form action={toggleTodo} className="todo-toggle-form">
                     <input type="hidden" name="id" value={todo.id} />
                     <input type="hidden" name="completed" value={String(todo.is_complete)} />

@@ -14,15 +14,28 @@
 npm run doctor
 npm ci
 npm run check
+npm run test:e2e
 ```
+
+`npm run test:e2e` ではPlaywright Chromiumを起動し、実際に次を操作します。
+
+- Sign upのメール / パスワードを打鍵
+- 短いパスワードのブラウザValidation
+- Loginのメール / パスワードを打鍵して送信
+- Todoタイトルを打鍵して追加
+- Todo完了状態をクリックで切替
+- Todoを削除
+
+E2Eは専用fixtureで動くため、実Supabaseのメール認証や秘密情報には依存しません。fixtureは `E2E_TEST_MODE=1` かつ非Productionの場合だけ有効です。
 
 その後、CIの一時workspace上だけで次のTodoサンプルを削除します。
 
 ```text
-app/(sample)/dashboard/
+app/(sample)/
 features/todos/
 supabase/sample/todos.sql
 tests/sample.test.mjs
+e2e/sample-todos.spec.mjs
 ```
 
 削除後にもう一度次を実行します。
@@ -33,9 +46,11 @@ npm run check
 
 これにより、共通基盤のlint / typecheck / test / buildがTodoサンプルへ依存していないことを毎回確認します。
 
-## 手動で行う第三者利用テスト
+## 第三者利用の実地テスト
 
-テンプレートの大きな構成変更後や、初心者向け導線を変更したときは、以下を一度通すことを推奨します。
+テンプレートの大きな構成変更後や、初心者向け導線を変更したときは、以下を一度通します。
+
+画面への打鍵・クリックそのものはCIのBrowser E2Eへ任せます。人が同じ文字入力を繰り返すことは受入条件にしません。人手が必要なのはGitHub / Supabase / Vercelの実サービス設定など、自動fixtureでは確認できない部分です。
 
 ### 1. 新しいRepositoryを作る
 
@@ -74,6 +89,8 @@ gh auth login
 npm run doctor
 npm ci
 npm run check
+npm run test:e2e:install
+npm run test:e2e
 ```
 
 ここで失敗する場合は、カスタマイズを始めず先に原因を解消します。
@@ -92,10 +109,11 @@ Supabase未設定でも `/` と `/api/health` は確認できます。
 Todoを使わない新規アプリを想定して次を削除します。
 
 ```text
-app/(sample)/dashboard/
+app/(sample)/
 features/todos/
 supabase/sample/todos.sql
 tests/sample.test.mjs
+e2e/sample-todos.spec.mjs
 ```
 
 削除後:
@@ -122,7 +140,11 @@ Todoをコピーすることを目的にせず、例えば `/equipment` のよ�
 - 2ユーザーで所有者RLSを実際に確認する
 - Security / Performance Advisorを確認する
 - feature固有テストを追加した
+- feature固有のブラウザE2Eを追加した
 - `npm run check` が成功する
+- `npm run test:e2e` が成功する
+
+Todoを削除した場合、`e2e/sample-todos.spec.mjs` を独自feature用のE2Eへ置き換えます。表示だけではなく、主要入力・更新・削除などを実際に打鍵・クリックしてください。
 
 ### 6. Gitフローを1回通す
 
@@ -166,14 +188,17 @@ Production Deploy後は少なくとも次を確認します。
 独自featureの認証必須Route
 ```
 
+ブラウザ操作の回帰確認はCI E2Eが担当し、Production確認では「実Supabase Authへ接続できる」「RLSが効いている」「Vercel環境変数が正しい」といった実サービス固有の観点を確認します。
+
 ## 合格条件
 
 - Use this templateから新しいRepositoryを作成できる
 - 新Repositoryへ `Protect main` を適用できる
 - `npm run doctor` に致命的エラーがない
 - 初期状態で `npm run check` 成功
+- Browser keyboard E2E成功
 - Todoサンプル削除後も `npm run check` 成功
-- 独自feature追加後も `npm run check` 成功
+- 独自feature追加後も `npm run check` / `npm run test:e2e` 成功
 - Pull Requestの `quality` CI成功
 - Squash Mergeできる
 - merge後main CI成功
@@ -188,7 +213,9 @@ sample削除後に失敗した場合は、まず**共通基盤がTodo固有フ�
 特に確認する場所:
 
 - `tests/core.test.mjs`
+- `tests/browser-e2e.test.mjs`
 - `tests/template-lifecycle.test.mjs`
+- `e2e/auth.spec.mjs`
 - `app/` の共通Route
 - `lib/`
 - `proxy.ts`

@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { isBrowserE2EMode } from "@/lib/e2e/mode";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -23,15 +24,19 @@ async function requestOrigin() {
 }
 
 export async function signIn(formData: FormData) {
-  if (!isSupabaseConfigured()) {
-    redirect(authErrorUrl("/auth/login", "Supabase の環境変数を設定してください。"));
-  }
-
   const email = readText(formData, "email");
   const password = readText(formData, "password");
 
   if (!email || !password) {
     redirect(authErrorUrl("/auth/login", "メールアドレスとパスワードを入力してください。"));
+  }
+
+  if (isBrowserE2EMode()) {
+    redirect("/");
+  }
+
+  if (!isSupabaseConfigured()) {
+    redirect(authErrorUrl("/auth/login", "Supabase の環境変数を設定してください。"));
   }
 
   const supabase = await createClient();
@@ -46,15 +51,21 @@ export async function signIn(formData: FormData) {
 }
 
 export async function signUp(formData: FormData) {
-  if (!isSupabaseConfigured()) {
-    redirect(authErrorUrl("/auth/sign-up", "Supabase の環境変数を設定してください。"));
-  }
-
   const email = readText(formData, "email");
   const password = readText(formData, "password");
 
   if (!email || password.length < 8) {
     redirect(authErrorUrl("/auth/sign-up", "メールアドレスと8文字以上のパスワードを入力してください。"));
+  }
+
+  if (isBrowserE2EMode()) {
+    redirect(
+      `/auth/login?message=${encodeURIComponent("E2E: アカウント作成フォーム送信を確認しました。")}`,
+    );
+  }
+
+  if (!isSupabaseConfigured()) {
+    redirect(authErrorUrl("/auth/sign-up", "Supabase の環境変数を設定してください。"));
   }
 
   const supabase = await createClient();
@@ -78,6 +89,10 @@ export async function signUp(formData: FormData) {
 }
 
 export async function signOut() {
+  if (isBrowserE2EMode()) {
+    redirect("/");
+  }
+
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
     await supabase.auth.signOut();

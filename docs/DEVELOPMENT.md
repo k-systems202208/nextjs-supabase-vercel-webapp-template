@@ -18,6 +18,15 @@ npm run check
 
 `npm run check` は lint → typecheck → test → build を順に実行します。
 
+画面への打鍵・クリックまで確認するときはChromium E2Eを実行します。
+
+```powershell
+npm run test:e2e:install
+npm run test:e2e
+```
+
+`test:e2e:install` はローカル初回だけで構いません。GitHub ActionsではChromiumを自動準備します。
+
 ## 開発フロー
 
 ```mermaid
@@ -26,7 +35,8 @@ flowchart LR
     D --> B["feature / fix branch"]
     B --> C["実装"]
     C --> Q["npm run check"]
-    Q --> E["Commit / Push"]
+    Q --> E2E["Browser E2E"]
+    E2E --> E["Commit / Push"]
     E --> F["Pull Request"]
     F --> G["GitHub Actions CI"]
     G --> H["merge"]
@@ -61,42 +71,75 @@ flowchart LR
     Q --> L["lint / typecheck"]
     L --> T["test"]
     T --> B["build"]
-    B --> S["sample削除"]
+    B --> E2E["Chromium実打鍵E2E"]
+    E2E --> S["sample削除"]
     S --> Q2["npm run check"]
     Q2 --> OK["CI Success"]
 ```
 
-CIもローカルと同じ `npm run check` を品質ゲートの入口にします。
+CIもローカルと同じ `npm run check` を品質ゲートの入口にし、その後にPlaywright Chromiumで実ブラウザ操作を確認します。
 
 ## テストの役割分離
 
-テンプレートでは、共通基盤、削除可能なTodoサンプル、テンプレート運用契約のテストを分けます。
+テンプレートでは、共通基盤、削除可能なTodoサンプル、テンプレート運用契約、ブラウザE2Eを分けます。
 
 ```text
 tests/core.test.mjs                共通基盤テスト
+tests/browser-e2e.test.mjs         ブラウザE2E共通契約テスト
 tests/sample.test.mjs              Todoサンプル専用テスト
 tests/doctor.test.mjs              doctor単体テスト
 tests/template-lifecycle.test.mjs  開発・運用・拡張契約テスト
+
+e2e/auth.spec.mjs                  共通Authの実打鍵E2E
+e2e/sample-todos.spec.mjs          Todoサンプル専用の実打鍵・クリックE2E
 ```
 
-Todoサンプルを削除する場合は `tests/sample.test.mjs` も一緒に削除します。`tests/core.test.mjs`、doctor、lifecycleテストはTodo固有ファイルの存在に依存しないため、独自アプリでも原則として残します。
+Todoサンプルを削除する場合は `tests/sample.test.mjs` と `e2e/sample-todos.spec.mjs` も一緒に削除します。`tests/core.test.mjs`、`tests/browser-e2e.test.mjs`、`e2e/auth.spec.mjs`、doctor、lifecycleテストはTodo固有ファイルの存在に依存しないため、独自アプリでも原則として残します。
 
-新しい業務機能を追加した場合は、その機能のテストを別ファイルとして追加してください。拡張方針は [EXTENDING.md](EXTENDING.md) を参照してください。
+新しい業務機能を追加した場合は、その機能の契約テストとブラウザE2Eを別ファイルとして追加してください。拡張方針は [EXTENDING.md](EXTENDING.md) を参照してください。
+
+## Browser keyboard E2E
+
+PlaywrightのChromiumを使い、DOMを読むだけでなく実際にフォームへ文字を入力し、ボタンをクリックします。
+
+標準テスト:
+
+- Sign up: メール / パスワードを実打鍵
+- 8文字未満パスワードのHTML Validation
+- Login: メール / パスワードを実打鍵して送信
+- Todo: タイトルを実打鍵して追加
+- Todo: 完了状態をクリックで切替
+- Todo: 削除ボタンをクリック
+
+E2Eでは実Supabase・確認メール・本番DBを使わず、テスト専用fixtureを使用します。これによりPRごとに安定して画面操作を検証できます。
+
+```text
+E2E_TEST_MODE=1
+かつ
+NODE_ENV != production
+```
+
+の場合だけfixtureが有効です。Productionでは `E2E_TEST_MODE=1` が誤設定されてもfixtureへ切り替わりません。
+
+実SupabaseのAuth / RLS / Vercel Production接続は、このE2Eとは別の受入確認として扱います。
 
 ## Template smoke test
 
-通常の品質ゲートに加え、CIでは一時workspace上で次のTodoサンプルを削除します。
+通常の品質ゲートとBrowser E2Eに加え、CIでは一時workspace上で次のTodoサンプルを削除します。
 
 ```text
-app/(sample)/dashboard/
+app/(sample)/
 features/todos/
 supabase/sample/todos.sql
 tests/sample.test.mjs
+e2e/sample-todos.spec.mjs
 ```
 
 その状態でもう一度 `npm run check` を実行し、共通基盤がTodoサンプルへ依存していないことを確認します。
 
-テンプレートの大きな構成変更時には、自動CIだけでなく **Use this template → Clone → 基準check → sample削除 → 独自feature → Pull Request** までを手動で通します。詳細は [TEMPLATE-SMOKE-TEST.md](TEMPLATE-SMOKE-TEST.md) を参照してください。
+テンプレートの大きな構成変更時には、自動CIだけでなく **Use this template → Clone → 基準check → Browser E2E → sample削除 → 独自feature → Pull Request** までを通します。詳細は [TEMPLATE-SMOKE-TEST.md](TEMPLATE-SMOKE-TEST.md) を参照してください。
+
+独自featureへ置換したら、`e2e/sample-todos.spec.mjs` をそのまま残すのではなく、そのfeatureの主要入力・更新・削除などを操作するE2Eへ置き換えます。
 
 ## Database変更
 
@@ -119,6 +162,7 @@ flowchart LR
 - major update は原則として個別に確認
 - Dependabot PRも通常のPRと同様にCI成功を必須条件として判断
 - 依存更新時は `package-lock.json` も同じPRで更新
+- PlaywrightはE2Eコマンド内で固定バージョンを指定し、更新時はBrowser E2Eを必ず通す
 
 ```mermaid
 flowchart LR
@@ -180,4 +224,4 @@ GitHub DesktopでBranch作成からPR作成までの具体的な操作を確認�
 
 ## README 更新
 
-セットアップ、環境変数、開発コマンド、デプロイ、運用、拡張契約、CIルールが変わった場合はREADME / docsも同じ変更で更新します。
+セットアップ、環境変数、開発コマンド、デプロイ、運用、拡張契約、CIルール、ブラウザE2Eが変わった場合はREADME / docsも同じ変更で更新します。
