@@ -50,9 +50,10 @@ flowchart LR
 
 - Node.js 22系か
 - `package.json` / `package-lock.json` / `.env.example` が存在するか
-- `.env.local` がある場合、主要Supabase環境変数がサンプル値のままではないか
+- `.env.local` がある場合、主要Supabase環境変数が未設定・サンプル値のままではないか
+- `NEXT_PUBLIC_SUPABASE_URL` が実アプリと同じ有効なHTTP/HTTPS URLか
 
-`.env.local` 未作成やSupabase未設定は警告に留めます。共通トップと `/api/health` はSupabase未設定でも確認できるためです。Node.js対象外や必須Repositoryファイル欠落はFAILとして終了コード1を返します。
+`.env.local` 未作成やSupabase未設定・サンプル値は警告に留めます。共通トップと `/api/health` はSupabase未設定でも確認できるためです。一方、設定済みの `NEXT_PUBLIC_SUPABASE_URL` がURLとして不正、HTTP/HTTPS以外、または認証情報を含む場合は設定ミスとしてFAILにします。Node.js対象外や必須Repositoryファイル欠落もFAILとして終了コード1を返します。
 
 ## CI 完了報告
 
