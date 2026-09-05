@@ -64,13 +64,15 @@ test("GitHub setup guidance is part of the template documentation", () => {
 test("sampleless smoke test protects the reusable common core", () => {
   assert.equal(existsSync(new URL("../docs/TEMPLATE-SMOKE-TEST.md", import.meta.url)), true);
   assert.match(ci, /Sampleless template smoke test/);
-  assert.match(ci, /app\/\(sample\)\/dashboard/);
+  assert.match(ci, /app\/\(sample\)/);
   assert.match(ci, /features\/todos/);
   assert.match(ci, /tests\/sample\.test\.mjs/);
+  assert.match(ci, /e2e\/sample-todos\.spec\.mjs/);
   assert.match(smokeTest, /Use this template/);
   assert.match(smokeTest, /npm run check/);
   assert.match(smokeTest, /Pull Request/);
   assert.match(smokeTest, /THIRD-PARTY-VALIDATION\.md/);
+  assert.match(smokeTest, /npm run test:e2e/);
 });
 
 test("third-party validation records real service checks", () => {
@@ -92,5 +94,6 @@ test("README, Getting Started and Development link beginner guidance", () => {
   assert.match(readme, /docs\/EXTENDING\.md/);
   assert.match(readme, /docs\/TEMPLATE-SMOKE-TEST\.md/);
   assert.match(development, /TEMPLATE-SMOKE-TEST\.md/);
+  assert.match(development, /npm run test:e2e/);
   assert.match(readme, /npm run doctor/);
 });
