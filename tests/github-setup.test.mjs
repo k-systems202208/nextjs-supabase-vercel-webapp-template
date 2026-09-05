@@ -57,13 +57,16 @@ test("template repository setup is scoped and verifies live settings", () => {
   assert.match(templateSetupScript, /派生アプリのWiki \/ Topicsは自動変更しません/);
 });
 
-test("template repository setup avoids full JSON parsing on Windows PowerShell 5.1", () => {
+test("template repository setup avoids full JSON parsing and quoted jq literals on Windows PowerShell 5.1", () => {
   assert.equal(templateSetupScript.includes("ConvertFrom-Json"), false);
   assert.match(templateSetupScript, /"--jq", "\.permissions\.admin"/);
   assert.match(templateSetupScript, /"--jq", "\.is_template"/);
   assert.match(templateSetupScript, /"--jq", "\.has_wiki"/);
-  assert.match(templateSetupScript, /\.names \| sort \| join/);
-  assert.match(templateSetupScript, /strict_required_status_checks_policy/);
+  assert.match(templateSetupScript, /\.names \| sort \| @tsv/);
+  assert.match(templateSetupScript, /\.\[\] \| \[\.id,\.name\] \| @tsv/);
+  assert.match(templateSetupScript, /\.rules\[\]\.parameters\.strict_required_status_checks_policy \/\/ empty/);
   assert.match(templateSetupScript, /Invoke-GhText -Arguments/);
   assert.equal(templateSetupScript.includes("$topicsText -split [Environment]::NewLine"), false);
+  assert.equal(templateSetupScript.includes(".names | sort | join"), false);
+  assert.equal(templateSetupScript.includes("select(.type =="), false);
 });
