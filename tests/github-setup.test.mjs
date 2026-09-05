@@ -56,3 +56,12 @@ test("template repository setup is scoped and verifies live settings", () => {
   assert.match(templateSetupScript, /"starter-template"/);
   assert.match(templateSetupScript, /派生アプリのWiki \/ Topicsは自動変更しません/);
 });
+
+test("template repository setup avoids full JSON parsing on Windows PowerShell 5.1", () => {
+  assert.equal(templateSetupScript.includes("ConvertFrom-Json"), false);
+  assert.match(templateSetupScript, /"--jq", "\.permissions\.admin"/);
+  assert.match(templateSetupScript, /"--jq", "\.is_template"/);
+  assert.match(templateSetupScript, /"--jq", "\.has_wiki"/);
+  assert.match(templateSetupScript, /"--jq", "\.names\[\]"/);
+  assert.match(templateSetupScript, /strict_required_status_checks_policy/);
+});
