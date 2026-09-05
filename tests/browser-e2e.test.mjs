@@ -11,9 +11,11 @@ const env = read("lib/supabase/env.ts");
 const playwrightConfig = read("playwright.config.mjs");
 
 test("browser keyboard E2E is part of the common CI contract", () => {
-  assert.match(packageJson.scripts["test:e2e"], /@playwright\/test@1\.62\.1/);
+  assert.match(packageJson.scripts["test:e2e:install"], /@playwright\/test@1\.62\.1/);
+  assert.match(packageJson.scripts["test:e2e:install"], /package-lock=false/);
   assert.match(packageJson.scripts["test:e2e"], /playwright test/);
   assert.match(ci, /Browser keyboard E2E/);
+  assert.match(ci, /npm install --no-save --package-lock=false @playwright\/test@1\.62\.1/);
   assert.match(ci, /playwright install --with-deps chromium/);
   assert.match(ci, /npm run test:e2e/);
 });
