@@ -43,6 +43,8 @@ flowchart LR
 
 詳細は [docs/QUALITY-VERIFICATION.md](docs/QUALITY-VERIFICATION.md) を参照してください。
 
+Security issueを報告する場合は、攻撃手順・token・秘密情報・実データをPublic Issueへ記載せず、[.github/SECURITY.md](.github/SECURITY.md) の報告手順を使用してください。
+
 ## ブランチ命名
 
 ```text
@@ -124,7 +126,7 @@ npm run test:e2e:install
 npm run test:e2e
 ```
 
-## CI
+## CI / Supply Chain
 
 GitHub Actionsは次を検証します。
 
@@ -135,6 +137,11 @@ GitHub Actionsは次を検証します。
 - lint / typecheck / test / build
 - Playwright Chromium Browser keyboard E2E
 - Todoサンプル削除後のsampleless template smoke test
+- Repository内Markdownリンク整合性
+
+外部GitHub Actionはfloating tagではなくfull commit SHAへ固定します。DependabotのGitHub Actions更新も通常PRとしてCIを通してから取り込みます。
+
+Protect main RulesetはRequired Status ChecksをStrictにし、mainが更新された場合は最新mainとの組み合わせを再確認してからMergeします。
 
 CI失敗中はMergeしません。一方、CIがすべてGreenでも、Verification Planで定義したRiskを観測していない場合はMerge判断の根拠として不十分です。
 
@@ -219,6 +226,7 @@ Vercel token
 - [docs/QUALITY-VERIFICATION.md](docs/QUALITY-VERIFICATION.md)
 - [docs/GITHUB-SETUP.md](docs/GITHUB-SETUP.md)
 - [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md)
-- [docs/SECURITY.md](docs/SECURITY.md)
+- [docs/SECURITY.md](docs/SECURITY.md) - 実装時のSecurity設計
+- [.github/SECURITY.md](.github/SECURITY.md) - 脆弱性報告ポリシー
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 - [docs/OPERATIONS.md](docs/OPERATIONS.md)
