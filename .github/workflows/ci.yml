@@ -11,7 +11,7 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       NEXT_TELEMETRY_DISABLED: "1"
 
@@ -59,17 +59,24 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
+      - name: Install browser E2E runner
+        run: npx --yes --package=@playwright/test@1.62.1 playwright install --with-deps chromium
+
       - name: Quality gate
         run: npm run check
+
+      - name: Browser keyboard E2E
+        run: npm run test:e2e
 
       - name: Sampleless template smoke test
         shell: bash
         run: |
           set -euo pipefail
           rm -rf -- \
-            "app/(sample)/dashboard" \
+            "app/(sample)" \
             "features/todos" \
             "supabase/sample/todos.sql" \
             "tests/sample.test.mjs" \
+            "e2e/sample-todos.spec.mjs" \
             ".next"
           npm run check
