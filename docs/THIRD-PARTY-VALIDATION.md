@@ -128,7 +128,31 @@ Production Deploy後は少なくとも次を確認します。
 
 認証必須Routeは未ログイン時にログイン画面へ遷移し、ログイン後は自分のデータだけを扱えることを確認します。
 
-## 8. READMEを書き換えても共通資料への導線を残す
+## 8. Health checkをAuth Proxyに依存させない
+
+実地テストでは、Vercel Productionの `/api/health` が500になる問題を確認しました。
+
+Health Route本体は設定状態をJSONで返すだけでしたが、共通 `proxy.ts` のmatcherが `/api/health` も対象にしていたため、Supabase Authのセッション検証がHealth Routeより先に実行されていました。
+
+ヘルスチェックは、認証セッション更新やAuth外部通信に依存せず、アプリ自身の設定状態を返せる必要があります。そのため、このテンプレートでは `/api/health` をAuth Proxy対象外にします。
+
+```text
+/api/health -> Auth Proxyを通さずHealth Routeへ
+その他のAuth対象Route -> Supabase Auth Proxyでセッション更新
+```
+
+変更後、Productionの `/api/health` で次を実際に確認しました。
+
+```json
+{
+  "status": "ok",
+  "supabaseConfigured": true
+}
+```
+
+Vercel Deployが成功していても、Production URLを実際に開くまではこの種の実行時不具合を検出できません。
+
+## 9. READMEを書き換えても共通資料への導線を残す
 
 第三者がテンプレートを独自アプリへ変更すると、READMEもアプリ向けに書き換えることになります。
 
