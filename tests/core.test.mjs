@@ -76,7 +76,8 @@ test("common auth default flow is not coupled to the optional Todo dashboard", (
   assert.doesNotMatch(authActions, /redirect\("\/dashboard"\)/);
   assert.doesNotMatch(authActions, /next=\/dashboard/);
   assert.doesNotMatch(authConfirm, /return "\/dashboard"/);
-  assert.match(authActions, /safeInternalPath/);\n  assert.match(authActions, /redirect\(next\)/);
+  assert.match(authActions, /safeInternalPath/);
+  assert.match(authActions, /redirect\(next\)/);
   assert.match(authConfirm, /return "\/"/);
 });
 
