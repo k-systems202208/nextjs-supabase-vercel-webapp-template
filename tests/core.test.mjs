@@ -9,6 +9,10 @@ const envExample = read(".env.example");
 const serviceWorker = read("public/sw.js");
 const authActions = read("app/auth/actions.ts");
 const authConfirm = read("app/auth/confirm/route.ts");
+const authAccess = read("lib/auth/access.ts");
+const authProxy = read("lib/supabase/proxy.ts");
+const authLogin = read("app/auth/login/page.tsx");
+const authSignup = read("app/auth/sign-up/page.tsx");
 const readme = read("README.md");
 const customizing = read("docs/CUSTOMIZING.md");
 const supabaseSetup = read("docs/SUPABASE-SETUP.md");
@@ -50,6 +54,7 @@ test("secrets are ignored and publishable env template exists", () => {
   assert.match(envExample, /NEXT_PUBLIC_SUPABASE_URL/);
   assert.match(envExample, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
   assert.match(envExample, /NEXT_PUBLIC_SITE_URL/);
+  assert.match(envExample, /AUTH_ACCESS_MODE=public/);
   assert.doesNotMatch(envExample, /service_role/i);
 });
 
@@ -120,4 +125,17 @@ test("public template has MIT license and Dependabot maintenance", () => {
   assert.match(readme, /MIT License/);
   assert.match(development, /ESLint 10/);
   assert.match(development, /Dependabot/);
+});
+
+
+test("invite-only mode is enforced in the common auth layer", () => {
+  assert.match(authAccess, /"public" \| "invite_only"/);
+  assert.match(authAccess, /value\.startsWith\("\/"\)/);
+  assert.match(authAccess, /value\.startsWith\("\/\/"\)/);
+  assert.match(authProxy, /isInviteOnlyAccess/);
+  assert.match(authProxy, /supabase\.auth\.getClaims\(\)/);
+  assert.match(authProxy, /loginRedirect/);
+  assert.match(authSignup, /isInviteOnlyAccess/);
+  assert.match(authLogin, /name="next"/);
+  assert.match(authLogin, /!inviteOnly/);
 });

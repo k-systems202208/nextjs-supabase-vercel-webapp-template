@@ -72,6 +72,13 @@ export function diagnose({ root = ROOT, nodeVersion = process.versions.node } = 
     add("WARN", ".env.local は未作成です。Supabase機能を使う前に .env.example から作成してください。");
   } else {
     const env = parseEnv(readFileSync(envPath, "utf8"));
+    const accessMode = env.get("AUTH_ACCESS_MODE");
+    if (accessMode && !["public", "invite_only"].includes(accessMode)) {
+      add("FAIL", "AUTH_ACCESS_MODE は public または invite_only を指定してください。");
+    } else {
+      add("PASS", "AUTH_ACCESS_MODE=" + (accessMode || "public"));
+    }
+
     for (const name of REQUIRED_ENV) {
       const value = env.get(name);
       if (isPlaceholder(value)) {

@@ -21,6 +21,7 @@ export default defineConfig({
       NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "e2e_public_key",
       NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3100",
+      AUTH_ACCESS_MODE: "invite_only",
     },
   },
 });

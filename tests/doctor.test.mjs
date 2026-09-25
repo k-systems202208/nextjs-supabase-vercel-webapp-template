@@ -17,7 +17,7 @@ function makeRepo() {
 function writeEnv(root, url) {
   writeFileSync(
     path.join(root, ".env.local"),
-    `NEXT_PUBLIC_SUPABASE_URL=${url}\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_test-key\n`,
+    `NEXT_PUBLIC_SUPABASE_URL=${url}\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_test-key\nAUTH_ACCESS_MODE=public\n`,
     "utf8",
   );
 }
@@ -135,5 +135,42 @@ test("doctor fails Node versions above 22", () => {
     );
   } finally {
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+
+test("doctor accepts invite_only and rejects unknown auth access modes", () => {
+  const validRoot = makeRepo();
+  try {
+    writeFileSync(
+      path.join(validRoot, ".env.local"),
+      "NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_test-key\nAUTH_ACCESS_MODE=invite_only\n",
+      "utf8",
+    );
+    const valid = diagnose({ root: validRoot, nodeVersion: "22.18.0" });
+    assert.equal(valid.failed, false);
+    assert.equal(
+      valid.checks.some((check) => check.message === "AUTH_ACCESS_MODE=invite_only"),
+      true,
+    );
+  } finally {
+    rmSync(validRoot, { recursive: true, force: true });
+  }
+
+  const invalidRoot = makeRepo();
+  try {
+    writeFileSync(
+      path.join(invalidRoot, ".env.local"),
+      "NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_test-key\nAUTH_ACCESS_MODE=closed\n",
+      "utf8",
+    );
+    const invalid = diagnose({ root: invalidRoot, nodeVersion: "22.18.0" });
+    assert.equal(invalid.failed, true);
+    assert.equal(
+      invalid.checks.some((check) => check.message.includes("AUTH_ACCESS_MODE")),
+      true,
+    );
+  } finally {
+    rmSync(invalidRoot, { recursive: true, force: true });
   }
 });
