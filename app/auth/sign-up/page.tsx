@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { isInviteOnlyAccess } from "@/lib/auth/access";
 import { signUp } from "../actions";
 
 type SearchParams = Promise<{ error?: string | string[] }>;
@@ -8,6 +10,13 @@ function first(value: string | string[] | undefined) {
 }
 
 export default async function SignUpPage({ searchParams }: { searchParams: SearchParams }) {
+  if (isInviteOnlyAccess()) {
+    redirect(
+      "/auth/login?message=" +
+        encodeURIComponent("このアプリは招待制です。招待済みアカウントでログインしてください。"),
+    );
+  }
+
   const params = await searchParams;
   const error = first(params.error);
 
