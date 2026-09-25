@@ -1,7 +1,8 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { isInviteOnlyAccess, safeInternalPath } from "@/lib/auth/access";
 import { isBrowserE2EMode } from "@/lib/e2e/mode";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -12,7 +13,7 @@ function readText(formData: FormData, name: string) {
 }
 
 function authErrorUrl(path: string, message: string) {
-  return `${path}?error=${encodeURIComponent(message)}`;
+  return path + "?error=" + encodeURIComponent(message);
 }
 
 async function requestOrigin() {
@@ -26,13 +27,20 @@ async function requestOrigin() {
 export async function signIn(formData: FormData) {
   const email = readText(formData, "email");
   const password = readText(formData, "password");
+  const next = safeInternalPath(readText(formData, "next"));
 
   if (!email || !password) {
     redirect(authErrorUrl("/auth/login", "メールアドレスとパスワードを入力してください。"));
   }
 
   if (isBrowserE2EMode()) {
-    redirect("/");
+    const cookieStore = await cookies();
+    cookieStore.set("e2e-auth", "1", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+    });
+    redirect(next);
   }
 
   if (!isSupabaseConfigured()) {
@@ -46,11 +54,17 @@ export async function signIn(formData: FormData) {
     redirect(authErrorUrl("/auth/login", "メールアドレスまたはパスワードを確認してください。"));
   }
 
-  // Auth is common infrastructure. Do not couple its default destination to the optional Todo sample.
-  redirect("/");
+  redirect(next);
 }
 
 export async function signUp(formData: FormData) {
+  if (isInviteOnlyAccess()) {
+    redirect(
+      "/auth/login?message=" +
+        encodeURIComponent("このアプリは招待制です。招待済みアカウントでログインしてください。"),
+    );
+  }
+
   const email = readText(formData, "email");
   const password = readText(formData, "password");
 
@@ -60,7 +74,8 @@ export async function signUp(formData: FormData) {
 
   if (isBrowserE2EMode()) {
     redirect(
-      `/auth/login?message=${encodeURIComponent("E2E: アカウント作成フォーム送信を確認しました。")}`,
+      "/auth/login?message=" +
+        encodeURIComponent("E2E: アカウント作成フォーム送信を確認しました。"),
     );
   }
 
@@ -74,8 +89,7 @@ export async function signUp(formData: FormData) {
     email,
     password,
     options: {
-      // Keep the production allow-list exact and let /auth/confirm default to "/".
-      emailRedirectTo: `${origin}/auth/confirm`,
+      emailRedirectTo: origin + "/auth/confirm",
     },
   });
 
@@ -84,13 +98,16 @@ export async function signUp(formData: FormData) {
   }
 
   redirect(
-    `/auth/login?message=${encodeURIComponent("確認メールを送信しました。メール内のリンクを開いてください。")}`,
+    "/auth/login?message=" +
+      encodeURIComponent("確認メールを送信しました。メール内のリンクを開いてください。"),
   );
 }
 
 export async function signOut() {
   if (isBrowserE2EMode()) {
-    redirect("/");
+    const cookieStore = await cookies();
+    cookieStore.delete("e2e-auth");
+    redirect(isInviteOnlyAccess() ? "/auth/login" : "/");
   }
 
   if (isSupabaseConfigured()) {
@@ -98,5 +115,5 @@ export async function signOut() {
     await supabase.auth.signOut();
   }
 
-  redirect("/");
+  redirect(isInviteOnlyAccess() ? "/auth/login" : "/");
 }

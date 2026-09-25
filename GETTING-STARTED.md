@@ -138,6 +138,7 @@ npm run doctor
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
 # NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
+AUTH_ACCESS_MODE=public
 ```
 
 Project URL / Publishable KeyはSupabase Projectの **Connect** から取得します。
@@ -331,3 +332,13 @@ CI成功報告時は必ず次を併記します。
 - 修正ドキュメント一覧
 - 修正または追加したテスト一覧
 - CI結果
+
+## 18. 招待制アプリとして開始する
+
+一般公開せず招待ユーザーだけで利用する場合は、Supabase設定後に次へ変更します。
+
+```env
+AUTH_ACCESS_MODE=invite_only
+```
+
+Supabase Dashboardでも `Allow new users to sign up` をOFFにし、Authentication → Users → Add user → Send invitation から利用者を追加します。詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) を参照してください。

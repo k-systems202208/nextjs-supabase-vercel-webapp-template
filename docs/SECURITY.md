@@ -93,3 +93,18 @@ Service Workerは `/auth`、`/dashboard`、`/api` をキャッシュしません
 ## Secrets
 
 `.env.local`、秘密鍵、認証情報をGitへコミットしません。誤ってコミットした場合はキーを失効・ローテーションし、必要に応じて履歴から除去します。
+
+## Invite-only access
+
+`AUTH_ACCESS_MODE=invite_only` はアプリを認証必須にしますが、**UIを隠すだけでは招待制になりません**。
+
+Productionでは次を同時に満たしてください。
+
+- Supabase Dashboardで `Allow new users to sign up` をOFF
+- Anonymous sign-insを有効化しない
+- 未認証RouteをProxyで遮断
+- Sign up Server Actionでもinvite_onlyを拒否
+- DatabaseはRLSを維持
+- 招待用Secret KeyはServer環境だけで扱い、`NEXT_PUBLIC_` を付けない
+
+認証済みであることと、個別データへの認可は別です。invite_onlyでもRLSを省略しません。

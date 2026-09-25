@@ -6,7 +6,11 @@ test.beforeEach(async ({ request }) => {
 });
 
 test("Todo sample is operable by real browser typing and clicks", async ({ page }) => {
-  await page.goto("/dashboard");
+  await page.goto("/auth/login?next=%2Fdashboard");
+  await page.getByLabel("メールアドレス").fill("sample@example.test");
+  await page.getByLabel("パスワード", { exact: true }).fill("abcdefgh");
+  await page.getByRole("button", { name: "ログイン" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
 
   const titleInput = page.getByLabel("Todoタイトル");
   await page.getByRole("button", { name: "追加" }).click();

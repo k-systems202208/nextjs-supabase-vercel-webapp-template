@@ -126,3 +126,39 @@ sequenceDiagram
 アプリ側の認証チェックだけを信用せず、DBのRLSを最終的な認可境界として維持します。Server Actionでも `getClaims()` を使ってログイン状態を検証し、RLSでも所有者・共有条件を検証します。
 
 ブラウザ用環境変数にはProject URLとPublishable Keyを使用し、Secret Key / `service_role` / Database passwordを `NEXT_PUBLIC_` へ設定しないでください。
+
+## 招待制クローズドアクセス
+
+`AUTH_ACCESS_MODE=invite_only` を設定すると、テンプレート共通Authを招待制として利用できます。
+
+```mermaid
+flowchart TD
+    U["未認証ユーザー"] --> P["Auth Proxy"]
+    P --> L["/auth/login"]
+    I["招待済みユーザー"] --> L
+    L --> A["Supabase Auth"]
+    A -->|成功| R["元の内部URLへ戻る"]
+    S["/auth/sign-up"] --> L
+```
+
+### 必須設定
+
+アプリ側:
+
+```env
+AUTH_ACCESS_MODE=invite_only
+```
+
+Supabase Dashboard側でも **Allow new users to sign up をOFF** にします。これにより既存ユーザーだけがSign inできます。
+
+招待は Dashboard の Authentication → Users → Add user → Send invitation を使用します。将来アプリ内の管理画面から招待する場合は、Auth Admin APIをSecret Key付きの信頼できるServer環境だけで呼び出し、ブラウザへSecret Keyを公開しません。
+
+### 防御層
+
+- Proxy: 未認証のアプリ画面アクセスをLoginへ送る
+- Sign up Page: invite_onlyでは表示しない
+- Sign up Server Action: 直接POSTされても拒否
+- Supabase Auth設定: 自己Sign up自体を無効化
+- RLS: Databaseの最終認可境界を維持
+
+Loginの `next` は `/` から始まる同一アプリ内パスのみ許可し、`https://...` や `//...` は `/` へフォールバックします。

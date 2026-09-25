@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { isInviteOnlyAccess, safeInternalPath } from "@/lib/auth/access";
 import { signIn } from "../actions";
 
 type SearchParams = Promise<{
   message?: string | string[];
   error?: string | string[];
+  next?: string | string[];
 }>;
 
 function first(value: string | string[] | undefined) {
@@ -14,18 +16,25 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
   const params = await searchParams;
   const message = first(params.message);
   const error = first(params.error);
+  const next = safeInternalPath(first(params.next));
+  const inviteOnly = isInviteOnlyAccess();
 
   return (
     <main className="auth-shell">
       <section className="auth-card">
         <p className="eyebrow">SUPABASE AUTH</p>
         <h1 className="auth-title">ログイン</h1>
-        <p className="muted">メールアドレスとパスワードでログインします。</p>
+        <p className="muted">
+          {inviteOnly
+            ? "このアプリは招待制です。招待済みアカウントでログインしてください。"
+            : "メールアドレスとパスワードでログインします。"}
+        </p>
 
         {message ? <p className="notice success">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
 
         <form action={signIn} className="form-stack">
+          <input type="hidden" name="next" value={next} />
           <label>
             メールアドレス
             <input name="email" type="email" autoComplete="email" required />
@@ -43,7 +52,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
         </form>
 
         <div className="auth-links">
-          <Link href="/auth/sign-up">新規アカウントを作成</Link>
+          {!inviteOnly ? <Link href="/auth/sign-up">新規アカウントを作成</Link> : null}
           <Link href="/">トップへ戻る</Link>
         </div>
       </section>
