@@ -10,7 +10,9 @@ test("invite-only mode blocks self signup and protects app routes", async ({ pag
   await page.goto("/auth/sign-up");
   await expect(page).toHaveURL(/\/auth\/login\?message=/);
   await expect(
-    page.getByText("このアプリは招待制です。招待済みアカウントでログインしてください。"),
+    page.locator(".notice.success").filter({
+      hasText: "このアプリは招待制です。招待済みアカウントでログインしてください。",
+    }),
   ).toBeVisible();
 
   await page.goto("/dashboard");
