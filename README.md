@@ -33,6 +33,7 @@ flowchart LR
 - Authセッション更新の仕組み
 - RLSを前提としたセキュリティ設計
 - Login / Sign up / Confirm の認証実装例
+- `AUTH_ACCESS_MODE=invite_only` による招待制クローズドアクセス
 - PWAの基本構成
 - `/api/health`
 - `npm run doctor` による環境診断
@@ -116,6 +117,7 @@ npm run dev
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
 # NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
+AUTH_ACCESS_MODE=public
 ```
 
 Supabase Projectの作成、Project URL / Publishable Keyの取得、Auth URL、確認メール、Database / RLS、Vercel本番設定までの詳細は [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) を参照してください。
@@ -245,3 +247,17 @@ E2E fixtureはProductionでは有効化されません。`E2E_TEST_MODE=1` をPr
 ## License
 
 MIT Licenseです。第三者はLICENSEの条件に従って、利用・変更・再配布できます。詳細は [LICENSE](LICENSE) を参照してください。
+
+## 招待制のクローズドアプリ
+
+一般公開せず、招待済みユーザーだけが利用するアプリでは `.env.local` / Vercel に次を設定します。
+
+```env
+AUTH_ACCESS_MODE=invite_only
+```
+
+このモードでは未認証ユーザーを `/auth/login` へ送り、`/auth/sign-up` の自己登録を無効化します。画面側だけでなくSign up Server Actionでも拒否します。
+
+さらに **Supabase Dashboardでも `Allow new users to sign up` をOFF** にしてください。アプリ側だけでSign up UIを隠しても、Supabase Project側で自己登録を許可したままでは完全な招待制になりません。ユーザー追加は Authentication → Users → Add user → Send invitation を使います。
+
+詳細は [docs/AUTH-CRUD.md](docs/AUTH-CRUD.md) と [docs/SUPABASE-SETUP.md](docs/SUPABASE-SETUP.md) を参照してください。

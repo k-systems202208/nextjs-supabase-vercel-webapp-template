@@ -22,6 +22,7 @@ Vercel Project Settings に以下を登録します。
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `NEXT_PUBLIC_SITE_URL`（推奨: Production URL）
+- `AUTH_ACCESS_MODE`（`public` または `invite_only`）
 
 Production / Preview / Development の適用範囲を確認してください。
 
@@ -80,3 +81,13 @@ flowchart TD
 - PWA Manifest / Service Worker / Offline fallback
 
 PWAのService WorkerはProductionでのみ登録します。VercelのHTTPS環境で確認してください。
+
+## 招待制Production
+
+クローズドアプリではVercel Productionに次を設定します。
+
+```text
+AUTH_ACCESS_MODE=invite_only
+```
+
+同時にSupabase Dashboardで `Allow new users to sign up` をOFFにします。デプロイ後は、未認証状態で `/` と認証必須Routeへ直接アクセスして `/auth/login` へ遷移すること、`/auth/sign-up` を直接開いても自己登録できないこと、招待済みユーザーだけがLoginできることを確認します。

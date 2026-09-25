@@ -80,6 +80,7 @@ cp .env.example .env.local
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxxxxxxxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxxxxxxxxxxxxxxxxx
+AUTH_ACCESS_MODE=public
 ```
 
 ローカル開発ではまずこの2項目で構いません。
@@ -126,11 +127,13 @@ sequenceDiagram
 
 Dashboardで **Authentication → Providers** を開き、Email providerを確認します。
 
-テンプレートの標準想定:
+テンプレートの標準 `AUTH_ACCESS_MODE=public` の想定:
 
 - Email provider: 有効
-- 新規Sign up: 有効
+- Allow new users to sign up: 有効
 - Confirm Email: 有効
+
+招待制にする場合は `AUTH_ACCESS_MODE=invite_only` を設定し、**Allow new users to sign up をOFF** にします。OFFにすると既存ユーザーだけがSign inできます。招待は Authentication → Users → Add user → Send invitation から行います。
 
 本番用途ではメール確認を有効にすることを推奨します。
 
@@ -415,3 +418,21 @@ npm run check
 ```
 
 が成功することを確認します。
+
+## 15. 招待制で利用する場合
+
+Vercel / `.env.local`:
+
+```env
+AUTH_ACCESS_MODE=invite_only
+```
+
+Supabase Dashboard:
+
+1. Authenticationの設定で `Allow new users to sign up` をOFF
+2. Anonymous sign-insをOFFのままにする
+3. Authentication → Users → Add user → Send invitation から利用者を招待
+4. 招待メールのRedirect URLが許可済みであることを確認
+5. 未招待メールアドレスでは自己登録できないことをProductionで確認
+
+アプリの `invite_only` とSupabase側のSign up無効化は両方必要です。
