@@ -81,7 +81,7 @@ test("common auth default flow is not coupled to the optional Todo dashboard", (
 });
 
 test("signup uses an exact production confirmation path", () => {
-  assert.match(authActions, /emailRedirectTo: `\$\{origin\}\/auth\/confirm`/);
+  assert.match(authActions, /emailRedirectTo: origin \+ "\/auth\/confirm"/);
   assert.doesNotMatch(authActions, /emailRedirectTo:[^\n]*\?next=/);
 });
 
