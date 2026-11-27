@@ -4,6 +4,7 @@ import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const packageJson = JSON.parse(read("package.json"));
+const lockfile = JSON.parse(read("package-lock.json"));
 const ci = read(".github/workflows/ci.yml");
 const mode = read("lib/e2e/mode.ts");
 const authActions = read("app/auth/actions.ts");
@@ -11,7 +12,10 @@ const env = read("lib/supabase/env.ts");
 const playwrightConfig = read("playwright.config.mjs");
 
 test("browser keyboard E2E is part of the common CI contract", () => {
-  assert.equal(packageJson.devDependencies["@playwright/test"], "1.62.1");
+  assert.equal(
+    lockfile.packages["node_modules/@playwright/test"].version,
+    packageJson.devDependencies["@playwright/test"],
+  );
   assert.equal(packageJson.scripts["test:e2e:install"], "npx playwright install chromium");
   assert.match(packageJson.scripts["test:e2e"], /playwright test/);
   assert.match(ci, /Browser keyboard E2E/);
