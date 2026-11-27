@@ -59,8 +59,14 @@ test("supported Node runtime matches the CI contract", () => {
 });
 
 test("Playwright is a reproducible development dependency", () => {
-  assert.equal(packageJson.devDependencies["@playwright/test"], "1.62.1");
-  assert.equal(lockfile.packages[""].devDependencies["@playwright/test"], "1.62.1");
+  assert.equal(
+    lockfile.packages[""].devDependencies["@playwright/test"],
+    packageJson.devDependencies["@playwright/test"],
+  );
+  assert.equal(
+    lockfile.packages["node_modules/@playwright/test"].version,
+    packageJson.devDependencies["@playwright/test"],
+  );
   assert.equal(packageJson.scripts["test:e2e:install"], "npx playwright install chromium");
   assert.doesNotMatch(ci, /npm install --no-save/);
   assert.match(ci, /npx playwright install --with-deps chromium/);
